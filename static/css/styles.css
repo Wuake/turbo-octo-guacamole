@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans&display=swap');
+
+.navbar2 {
+	background-color: #000;
+	border-top: 4px solid #1ce;
+	padding: 1em 0;
+}
+.navbar3 {
+	color: #1ce;
+}
+.containerp {
+   min-height:600px;
+}
+
+.nav-link:hover {
+  color: #1ce !important;
+}
+
+#chat2 .form-control {
+border-color: transparent;
+}
+
+#chat2 .form-control:focus {
+border-color: transparent;
+box-shadow: inset 0px 0px 0px 1px transparent;
+}
+
+.divider:after,
+.divider:before {
+content: "";
+flex: 1;
+height: 1px;
+background: #eee;
+}
+
+.nav-tabs .nav-item .nav-link {
+	color: #1ce;
+}
+  
+.nav-tabs .nav-item .nav-link.active {
+	color: #000;
+}
+
+  /* hr pour ne pas avoir d'espace en haut dans le live */
+  hr.divider { 
+	margin-top: 0em;
+	border-width: 2px;
+  } 
+  hr.divider-b { 
+	margin-bottom: 0em;
+	border-width: 2px;
+  } 
