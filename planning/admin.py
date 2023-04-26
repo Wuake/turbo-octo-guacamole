@@ -4,21 +4,15 @@ from .models import Congress
 from .models import Day
 from .models import Room
 from .models import Session
-from .models import Presentation
+from .models import Presentation, Intervenant, InterPresent
+
 
 # Register your models here.
-
-admin.site.register(Day)
-admin.site.register(Room)
-
-admin.site.register(Presentation)
 
 
 class CongressAdmin(admin.ModelAdmin):
     ist_display = ( 'name', 'number')
     readonly_fields = ('id',)
-    
-admin.site.register(Congress)  
 
     
 class SessionAdmin(admin.ModelAdmin):
@@ -28,3 +22,5 @@ class SessionAdmin(admin.ModelAdmin):
     ordering = ('-date',)
     
 admin.site.register(Session, SessionAdmin)
+
+admin.site.register([Day, Room, Presentation, Congress, Intervenant, InterPresent])

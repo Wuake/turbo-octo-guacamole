@@ -75,7 +75,7 @@ def show_plan(request):
     rooms = Room.objects.filter(congress__pk=congres.pk)
     return render(request, 'Planning/show.html', {'rooms': rooms})
 
-
+"""
 #@login_required
 def ajax_load_planning(request, pk, date):
     today = date
@@ -96,6 +96,46 @@ def ajax_load_planning(request, pk, date):
     } for presentation in presentations ]
     
     return JsonResponse(presentations_list, safe=False)
+"""
+
+def ajax_load_planning(request, pk, date):
+    today = date
+    presentations = Presentation.objects.select_related('session').filter(session__room_id=pk, session__date=today)
+
+    presentations_list = []
+    for presentation in presentations:
+        interpresents = InterPresent.objects.filter(id_presentation=presentation.pk)
+        inter_list = []
+        infos = []
+
+        #on itere sur les interpresent
+        for interp in interpresents:
+            inter_dict = {
+                'nom': interp.id_intervenant.nom,
+                'prenom': interp.id_intervenant.prenom
+            }
+            inter_list.append(inter_dict)
+
+        #On met le tout dans un tableau pour afficher les différents noms et prenoms des gens qui ont une présentation
+        for personne in inter_list:
+            infos.append(" " + personne['nom'] + " " + personne['prenom'])
+
+        print(infos)
+
+        presentation_dict = {
+            "id": presentation.pk,
+            "title": presentation.title,
+            "author": infos,
+            "duration": presentation.duration,
+            "session_id": presentation.session_id,
+            "session_title": presentation.session.title,
+            "time_begin": presentation.session.time_start,
+            "time_end": presentation.session.time_end,
+        }
+    presentations_list.append(presentation_dict)
+
+    return JsonResponse(presentations_list, safe=False)
+
 
 #@login_required
 def ajax_add_session(request, pk):

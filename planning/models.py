@@ -45,27 +45,32 @@ class Session(models.Model):
 class Presentation(models.Model):
 	session = models.ForeignKey(Session, related_name="event_conf_name", on_delete=models.CASCADE)
 	title = models.CharField(max_length=250, default=".............")
-	author = models.CharField(max_length=100,  default="........d.....")
+	# author = models.CharField(max_length=100,  default="........d.....")
 	duration = models.SmallIntegerField(default=30)
 	
 	def __str__(self):
 		return self.title
 	
-class Intervenant(models.Model):
 
+class Intervenant(models.Model):
     def __str__(self):
-        return f'{self.nom, self.prenom}'
+        return f'{self.nom} {self.prenom}'
 
     nom = models.fields.CharField(max_length=50)
     prenom = models.fields.CharField(max_length=50)
-
-    # Photo à voir si token ou autre manière à enregistrer
     logo = models.ImageField(upload_to='', blank=True, null=True)
+
+    def to_json(self):
+        return {
+            'nom': self.nom,
+            'prenom': self.prenom,
+        }
+          
     
 class InterPresent(models.Model):
 
     def __str__(self):
-        return f'{self.id_presentation}'
+        return f'{self.id_presentation, "-", self.id_intervenant }'
 
     id_presentation = models.ForeignKey(Presentation, on_delete=models.CASCADE)
     id_intervenant = models.ForeignKey(Intervenant,null= True, on_delete=models.SET_NULL)

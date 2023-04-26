@@ -1,4 +1,4 @@
-from planning.models import Congress
+from planning.models import Congress, InterPresent, Intervenant
 from django import forms
 
        
@@ -20,5 +20,6 @@ class SessionForm(forms.Form):
 class PresentationForm(forms.Form):
     id = forms.CharField(label='', initial=-1,widget=forms.TextInput(attrs={'type': 'hidden', 'id':"pres_id"}) )
     name = forms.CharField(label='',widget=forms.TextInput(attrs={'placeholder': 'Titre de la présentation', 'id':"pres_name"}) )
-    author = forms.CharField(label='',widget=forms.TextInput(attrs={'placeholder': 'Auteurs', 'id':"pres_author"}) )
+    
+    author = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author"}) )
     duration = forms.CharField(label='',widget=forms.TextInput(attrs={'placeholder': 'Durée de la présentation', 'id':"pres_duration"}) )
