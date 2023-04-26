@@ -132,7 +132,7 @@ def ajax_load_planning(request, pk, date):
             "time_begin": presentation.session.time_start,
             "time_end": presentation.session.time_end,
         }
-    presentations_list.append(presentation_dict)
+        presentations_list.append(presentation_dict)
 
     return JsonResponse(presentations_list, safe=False)
 
@@ -149,7 +149,7 @@ def ajax_add_session(request, pk):
             new = Session.objects.get(id=int(jsonbody['id']))
         except Session.DoesNotExist:
             new = None  
-        
+       
         if new :
             new.title=jsonbody['title']
             new.time_start=jsonbody['time1']
@@ -166,7 +166,7 @@ def ajax_add_session(request, pk):
                 Presentation.objects.create(
                 session_id = sess.id,
                 title = 'Présentation',
-                author= 'autheur',
+                # author= 'autheur',
                 duration= 30,
                 )
     presentations_list = { }
@@ -181,26 +181,84 @@ def ajax_add_pres(request, pk):
         jsonbody = json.loads(request.body)
 
         response_data['title'] = jsonbody['title']
-        response_data['time1'] = jsonbody['author']
         response_data['time2'] = jsonbody['duration']
+        response_data['author'] = jsonbody['author']
+        response_data['author1'] = jsonbody['author1']
+        response_data['author2'] = jsonbody['author2']
+        print("------------------")
+        print(response_data['author'])
+        print("----")
+        print(response_data['author1'])
+        print("----")
+        print(response_data['author2'])
+        print("------------------")
+
+        # ! REGLER LE BUG DE MODIFICATION DES INFORMATIONS DE PRESENTATION
 
         try:
             new = Presentation.objects.get(id=int(jsonbody['id']))
+            
         except Presentation.DoesNotExist:
             new = None           
             
         if new :
             new.session_id = pk
             new.title=jsonbody['title']
-            new.author=jsonbody['author']
+            # new.author=jsonbody['author']
             new.duration=jsonbody['duration']
             new.save()
         else :
             new =  Presentation.objects.create( session_id = pk,
                                                 title = jsonbody['title'],
-                                                author= jsonbody['author'],
+                                                # author= jsonbody['author'],
                                                 duration= jsonbody['duration'],
                                                 )
+            dernier_id = Presentation.objects.latest('id').id
+            # print(dernier_id)
+            
+        try:
+            new_inter = InterPresent.objects.get(id=int(jsonbody['id']))
+            new_intervenant = Intervenant.objects.get(id=int(jsonbody['author']))
+            
+            new_intervenant1 = Intervenant.objects.get(id=int(jsonbody['author1']))
+            print(new_intervenant1)
+            new_intervenant2 = Intervenant.objects.get(id=int(jsonbody['author2']))
+            print(new_intervenant2)
+            
+        except InterPresent.DoesNotExist:
+            new_inter = None
+            new_intervenant = Intervenant.objects.get(id=int(jsonbody['author']))
+            
+            if(jsonbody['author1']):
+                print(jsonbody['author1'])
+                new_intervenant1 = Intervenant.objects.get(id=int(jsonbody['author1']))
+                
+                if(jsonbody['author2']):
+                    print(jsonbody['author2'])
+                    new_intervenant2 = Intervenant.objects.get(id=int(jsonbody['author2']))
+                    
+        print('------------------Passé--------------------')
+
+        if new_inter :
+            new_inter.id_presentation = new
+            new_inter.id_intervenant=new_intervenant
+            if(jsonbody['author1']):
+                new_inter.id_intervenant=new_intervenant1
+                if(jsonbody['author2']):
+                    new_inter.id_intervenant=new_intervenant2
+            new_inter.save()
+        else :
+            new_inter = InterPresent.objects.create( id_presentation = new,
+                                                     id_intervenant = new_intervenant,
+                                                     )
+            if(jsonbody['author1']):
+                new_inter = InterPresent.objects.create( id_presentation = new,
+                                                        id_intervenant = new_intervenant1,
+                                                        )
+                if(jsonbody['author2']):
+                    new_inter = InterPresent.objects.create( id_presentation = new,
+                                                            id_intervenant = new_intervenant2,
+                                                            )
             
     return JsonResponse(response_data, safe=False)
 

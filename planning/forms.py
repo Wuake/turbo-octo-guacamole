@@ -20,6 +20,8 @@ class SessionForm(forms.Form):
 class PresentationForm(forms.Form):
     id = forms.CharField(label='', initial=-1,widget=forms.TextInput(attrs={'type': 'hidden', 'id':"pres_id"}) )
     name = forms.CharField(label='',widget=forms.TextInput(attrs={'placeholder': 'Titre de la présentation', 'id':"pres_name"}) )
-    
-    author = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author"}) )
     duration = forms.CharField(label='',widget=forms.TextInput(attrs={'placeholder': 'Durée de la présentation', 'id':"pres_duration"}) )
+    author = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author"}) )
+    author1 = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author1"}) )
+    author2 = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author2"}) )
+   

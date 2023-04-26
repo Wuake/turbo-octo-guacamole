@@ -14,7 +14,7 @@
             {% empty %}
                 <p> Désolé, pas de salles disponibles !</p>
             {% endfor %}
-
+            <button id="add_room">+</button>
         </div> <br>
         <!-- <hr class="divider" /> -->
   </div>
@@ -31,7 +31,6 @@
             <label class="form-check-label" for="inlineRadio1" >{{day.date}}</label>
           </div>
           {% endfor %}
-
             <div class="card">
                 <div class="card-body" data-mdb-perfect-scrollbar="true"  style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
                     <div class="list-group planning-area">  
@@ -49,6 +48,8 @@
             </div>
             <div id="form_pres"  display='none'>
               {{ pres_form|crispy }}  
+              
+              <button type="button" id="add_field">Intervenant supplémentaire</button>
               <hr>
               <button class="btn btn-info"  id="pres_submit">Valider Présentation</button>  
             </div>
@@ -57,7 +58,39 @@
     <input type="hidden" id="js_data" data-url="" data-csrf="{{csrf_token}}" />
 </div>
 
-<script type="text/javascript">
+<script type="text/javascript" defer>
+  // Affichage dynamique boutons intervenant dans ajout de presentations.
+  var addButton = document.getElementById("add_field");
+  var add_intervenants = 0
+
+
+  var input1 = document.getElementById("div_id_author1")
+    input1.hidden = true
+
+  var input2 = document.getElementById("div_id_author2")
+    input2.hidden = true
+
+
+    addButton.addEventListener("click", function() {
+        add_intervenants++
+        var form = document.querySelector("#form_pres");
+        console.log(form)
+        
+        switch(add_intervenants) {
+          case 1:
+            input1.hidden = false
+            // console.log(input1)
+            break;
+          case 2:
+            console.log(input2)
+            input2.hidden = false
+            break;
+          default:
+            console.log(`Sorry, we are out of ${add_intervenants}.`)
+        }
+    });
+
+
   let csrf_token = $("#js_data").attr("data-csrf");
   let send_btn = document.getElementById("sess_submit");
   send_btn.addEventListener('click', add_session);
@@ -102,6 +135,8 @@
     const dataToSend = JSON.stringify({"title": document.getElementById("pres_name").value,
                                        "id": document.getElementById("pres_id").value,
                                         "author": document.getElementById("pres_author").value,
+                                        "author1": document.getElementById("pres_author1").value,
+                                        "author2": document.getElementById("pres_author2").value,
                                         "duration": document.getElementById("pres_duration").value,
                                         "date" : date_sel,
                                       });
@@ -119,6 +154,11 @@
           load_planning(room_sel);
           document.getElementById("pres_id").value=-1
       });
+
+      console.log(document.getElementById("pres_author").value)
+      console.log(document.getElementById("pres_author1").value)
+      console.log(document.getElementById("pres_author2").value)
+
     }
 
     var id_pres, old_sel="";
@@ -200,7 +240,7 @@
         div.innerHTML += `
         <li  id="id_pres${ pres.id }" class="list-group-item   align-items-start list-group-item-action" onclick="select_prest(0,${ pres.session_id }, ${ pres.id } )">  
           <div class="d-flex w-100 justify-content-between">
-            <h5 class="mb-1"> ${ pres.id }   ${ pres.author } </h5>
+            <h5 class="mb-1">  ${ pres.author } </h5>
             <span class=" float-end">  <small> ${ pres.duration } min &nbsp;&nbsp; </small>
               <a href="#"  onclick="editPres( '${ pres.id }',' ${ pres.title }',' ${ pres.author }',' ${ pres.duration }')" class=" bi-pencil-fill text-secondary"></a> 
             </span> 
