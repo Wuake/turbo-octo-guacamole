@@ -6,10 +6,33 @@ from django.contrib import messages
 #from django.contrib.auth.decorators import user_passes_test
 from datetime import date, timedelta, datetime
 import json
+from django.views.decorators.csrf import csrf_exempt
+#from flask import Flask
+#app = Flask(__name__)
 # Create your views here.
 
 from .models import *
 from .forms import CongressForm, SessionForm, PresentationForm
+
+def addOneRoom(new):
+    # * Si il y a plusieurs congres,
+    # * mettre à jour cette fonction qui va chercher le dernier congres créé
+    try:
+        # * premier élément du QuerySet retourné 
+        new = Congress.objects.all().order_by('-id')[0]
+    except Congress.DoesNotExist:
+        new = None
+    if new :
+        rooms = Room.objects.all()
+        Room.objects.create(congress= new , number=str(rooms.count()+1), name="Salle "+str(rooms.count()+1))
+        status = "salle ajoutée"
+    else :
+        #retournement d'erreur
+        print("erreur lors de la creation de la salle => pas de congres en cours")
+        status = "error de creation de la salle => pas de congres en cours"
+
+    return JsonResponse({'status': status})
+
 
 def addRooms(new, nb):
     i=1
@@ -135,6 +158,21 @@ def ajax_load_planning(request, pk, date):
         presentations_list.append(presentation_dict)
 
     return JsonResponse(presentations_list, safe=False)
+
+# * charge les salles d'un congres
+# * prend en param l'id du congres
+def ajax_load_rooms(request):
+    # retire la ligne là si y'a plusieurs congrès et passe en param le pk du congrès visé
+    pk = Congress.objects.all().order_by('-id')[0]
+    rooms = Room.objects.filter(congress__pk=pk.id)
+    rooms_list = [{
+        "id": room.pk,
+        "name": room.name,
+        "congress": room.congress.name,
+        "number": room.number,
+    } for room in rooms]
+    print("Salut à tous c'est la salle")
+    return JsonResponse(rooms_list, safe=False)
 
 
 #@login_required
