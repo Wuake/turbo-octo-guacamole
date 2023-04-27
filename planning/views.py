@@ -11,6 +11,26 @@ import json
 from .models import *
 from .forms import CongressForm, SessionForm, PresentationForm
 
+def addOneRoom(new):
+    # * Si il y a plusieurs congres,
+    # * mettre à jour cette fonction qui va chercher le dernier congres créé
+    try:
+        # * premier élément du QuerySet retourné 
+        new = Congress.objects.all().order_by('-id')[0]
+    except Congress.DoesNotExist:
+        new = None
+    if new :
+        rooms = Room.objects.all()
+        Room.objects.create(congress= new , number=str(rooms.count()+1), name="Salle "+str(rooms.count()+1))
+        status = "salle ajoutée"
+    else :
+        #retournement d'erreur
+        print("erreur lors de la creation de la salle => pas de congres en cours")
+        status = "error de creation de la salle => pas de congres en cours"
+
+    return JsonResponse({'status': status})
+
+
 def addRooms(new, nb):
     i=1
     while i <= int(nb) :
@@ -101,31 +121,43 @@ def ajax_load_planning(request, pk, date):
 def ajax_load_planning(request, pk, date):
     today = date
     presentations = Presentation.objects.select_related('session').filter(session__room_id=pk, session__date=today)
+    
+
 
     presentations_list = []
     for presentation in presentations:
         interpresents = InterPresent.objects.filter(id_presentation=presentation.pk)
         inter_list = []
         infos = []
+        infos_id = []
 
         #on itere sur les interpresent
         for interp in interpresents:
+            # print(interp.id_intervenant)
+            # infos_id.append(interp.id_intervenant.id)
+            # print(infos_id)
+            # print(interp.id_intervenant.id)
             inter_dict = {
+                'id': interp.id_intervenant.id,
                 'nom': interp.id_intervenant.nom,
                 'prenom': interp.id_intervenant.prenom
-            }
+            }   
             inter_list.append(inter_dict)
 
         #On met le tout dans un tableau pour afficher les différents noms et prenoms des gens qui ont une présentation
         for personne in inter_list:
+            # print(personne)
             infos.append(" " + personne['nom'] + " " + personne['prenom'])
+            infos_id.append(personne['id'])
+        print(infos_id)
 
-        print(infos)
+        # print(infos)
 
         presentation_dict = {
             "id": presentation.pk,
             "title": presentation.title,
             "author": infos,
+            "author_id": infos_id,  
             "duration": presentation.duration,
             "session_id": presentation.session_id,
             "session_title": presentation.session.title,
@@ -135,6 +167,21 @@ def ajax_load_planning(request, pk, date):
         presentations_list.append(presentation_dict)
 
     return JsonResponse(presentations_list, safe=False)
+
+# * charge les salles d'un congres
+# * prend en param l'id du congres
+def ajax_load_rooms(request):
+    # retire la ligne là si y'a plusieurs congrès et passe en param le pk du congrès visé
+    pk = Congress.objects.all().order_by('-id')[0]
+    rooms = Room.objects.filter(congress__pk=pk.id)
+    rooms_list = [{
+        "id": room.pk,
+        "name": room.name,
+        "congress": room.congress.name,
+        "number": room.number,
+    } for room in rooms]
+    print("Salut à tous c'est la salle")
+    return JsonResponse(rooms_list, safe=False)
 
 
 #@login_required
@@ -185,13 +232,13 @@ def ajax_add_pres(request, pk):
         response_data['author'] = jsonbody['author']
         response_data['author1'] = jsonbody['author1']
         response_data['author2'] = jsonbody['author2']
-        print("------------------")
-        print(response_data['author'])
-        print("----")
-        print(response_data['author1'])
-        print("----")
-        print(response_data['author2'])
-        print("------------------")
+        # print("------------------")
+        # print(response_data['author'])
+        # print("----")
+        # print(response_data['author1'])
+        # print("----")
+        # print(response_data['author2'])
+        # print("------------------")
 
         # ! REGLER LE BUG DE MODIFICATION DES INFORMATIONS DE PRESENTATION
 
@@ -202,12 +249,16 @@ def ajax_add_pres(request, pk):
             new = None           
             
         if new :
+            print("modify")
             new.session_id = pk
             new.title=jsonbody['title']
+            
             # new.author=jsonbody['author']
             new.duration=jsonbody['duration']
+            InterPresent.objects.filter(id_presentation=new).delete()
             new.save()
         else :
+            print("add")
             new =  Presentation.objects.create( session_id = pk,
                                                 title = jsonbody['title'],
                                                 # author= jsonbody['author'],
@@ -215,28 +266,32 @@ def ajax_add_pres(request, pk):
                                                 )
             dernier_id = Presentation.objects.latest('id').id
             # print(dernier_id)
-            
+        
+        print('----------------------Test---------------------------')
+
         try:
             new_inter = InterPresent.objects.get(id=int(jsonbody['id']))
             new_intervenant = Intervenant.objects.get(id=int(jsonbody['author']))
-            
+            # print(new_intervenant)
             new_intervenant1 = Intervenant.objects.get(id=int(jsonbody['author1']))
-            print(new_intervenant1)
+            # print(new_intervenant1)
             new_intervenant2 = Intervenant.objects.get(id=int(jsonbody['author2']))
-            print(new_intervenant2)
+            # print(new_intervenant2)
             
         except InterPresent.DoesNotExist:
             new_inter = None
             new_intervenant = Intervenant.objects.get(id=int(jsonbody['author']))
-            
+            # print(jsonbody['author'])
             if(jsonbody['author1']):
-                print(jsonbody['author1'])
+                # print(jsonbody['author1'])
                 new_intervenant1 = Intervenant.objects.get(id=int(jsonbody['author1']))
                 
                 if(jsonbody['author2']):
-                    print(jsonbody['author2'])
+                    # print(jsonbody['author2'])
                     new_intervenant2 = Intervenant.objects.get(id=int(jsonbody['author2']))
-                    
+    
+        # print('---------------------- Fin de Test---------------------------')
+
         print('------------------Passé--------------------')
 
         if new_inter :
@@ -248,13 +303,35 @@ def ajax_add_pres(request, pk):
                     new_inter.id_intervenant=new_intervenant2
             new_inter.save()
         else :
-            new_inter = InterPresent.objects.create( id_presentation = new,
+            existing_inter = InterPresent.objects.filter(id_presentation=new, id_intervenant=new_intervenant)
+            if(jsonbody['author1']):
+                existing_inter1 = InterPresent.objects.filter(id_presentation=new, id_intervenant=new_intervenant1)
+            else:
+                existing_inter1 = None
+            if(jsonbody['author2']):
+                existing_inter2 = InterPresent.objects.filter(id_presentation=new, id_intervenant=new_intervenant2)
+            else:
+                existing_inter2 = None
+
+            if not existing_inter:
+               
+               new_inter = InterPresent.objects.create( id_presentation = new,
                                                      id_intervenant = new_intervenant,
                                                      )
-            if(jsonbody['author1']):
+            else:
+                print(existing_inter.first().id)
+                existing_inter.first().delete()
+                print(existing_inter.first().id)
                 new_inter = InterPresent.objects.create( id_presentation = new,
-                                                        id_intervenant = new_intervenant1,
-                                                        )
+                                                     id_intervenant = new_intervenant,
+                                                     )
+
+            if not existing_inter1:
+                if(jsonbody['author1']):
+                    new_inter = InterPresent.objects.create( id_presentation = new,
+                                                            id_intervenant = new_intervenant1,
+                                                            )
+            if not existing_inter2:
                 if(jsonbody['author2']):
                     new_inter = InterPresent.objects.create( id_presentation = new,
                                                             id_intervenant = new_intervenant2,

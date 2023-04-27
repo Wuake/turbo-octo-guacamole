@@ -11,4 +11,7 @@ urlpatterns = [
     path("sajax/<int:pk>/", views.ajax_add_session, name="session-ajax"),
     path("pajax/<int:pk>/", views.ajax_add_pres, name="pres-ajax"),
     path("dajax/<int:pk>/", views.ajax_del_pres, name="pres-del-ajax"),
+    #ajout d'une salle
+    path("salle-ajax/", views.addOneRoom, name="salle-ajax"),
+    path("load-ajax/", views.ajax_load_rooms, name="load-ajax"),
 ]

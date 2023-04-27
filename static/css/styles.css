@@ -40,6 +40,12 @@ background: #eee;
 .nav-tabs .nav-item .nav-link.active {
 	color: #000;
 }
+#rooms{
+  width: 100%;
+}
+.list-group{
+  width: 100%;
+}
 
   /* hr pour ne pas avoir d'espace en haut dans le live */
   hr.divider { 
