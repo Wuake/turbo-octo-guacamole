@@ -8,11 +8,12 @@
     <div class="list-group list-group-horizontal">
       <div class="list-group list-group-horizontal" id="rooms">
         {% for room in rooms %}
-        <a href="javascript:setRoomLive('{{room.number}}', '{{room.id}}', '{{ rooms|length }}', '{{room.moderator.id}}')"
-          class="list-group-item list-group-item-action text-center rounded-0"
+        <a contenteditable="false" href="javascript:setRoomLive('{{room.number}}', '{{room.id}}', '{{ rooms|length }}', '{{room.moderator.id}}')"
+          class="editable-text list-group-item list-group-item-action text-center rounded-0"
           style=" border-bottom: 2px solid #1ce; height: 34px; padding: 2px 7px;" id="room_id{{ forloop.counter }}">
-          {{room.number}}.{{room.name}}</a>
+          {{room.name}}</a>
         {% empty %}
+
         <p> Désolé, pas de salles disponibles !</p>
         {% endfor %}
       </div>
@@ -74,9 +75,55 @@
   let sess_sel = 0;
   let on_edit = false;
 
+  // Modification d'un nom de salle quand on double-clique dessus
+  function doubleClickRoom() {
+    let roomId = this.getAttribute('data-room-id');
+    console.log('Salle', roomId, 'double-cliquée !');
+    this.setAttribute('contenteditable', 'true');
+  }
+
+  // Récupérez toutes les salles de la page
+  const rooms = document.querySelectorAll('.list-group-item');
+
+  // Bouclez sur chaque salle pour ajouter un événement double-clic
+  rooms.forEach(room => {
+    const roomId = room.getAttribute('id').replace('room_id', '');
+    room.setAttribute('data-room-id', roomId);
+    room.addEventListener('dblclick', doubleClickRoom);
+  
+  });
+
+  // Zone de texte éditable pour la modification des noms des salles
+  $(".editable-text").on("blur", function () {
+    var id = $(this).attr("data-room-id");
+    var updatedText = $(this).html();
+    var editableUpdated = $(this).siblings(".editable-text-updated");
+    console.log(id, updatedText)
+    editableUpdated.html(updatedText);
+    this.setAttribute('contenteditable', 'false');
+ 
+    // envoie le text updaté à la base de données
+    fetch("{% url 'planning:salle-modif-ajax' %}", {
+      method: "POST", 
+      credentials: 'same-origin',
+      headers: {
+        "X-CSRFToken": csrf_token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: id,
+        text: updatedText,
+      }),
+    }).then(function (response) {
+      console.log("Le texte a été enregistré !");
+    }).catch(function (error) {
+      console.log("Une erreur s'est produite : " + error);
+      console.log("c'est la merde (fonction update-text)")
+    });
+    // APPELLER LA FONCTION POUR RECHARGER LES SALLES ICI
+  });
+
   // Ajoute une salle quand on clique sur le bouton + ( id="add_room" )
-  // ! ne se met pas à jour apres l'insertion d'une salle
-  // 1 clique fonctionne, puis plus rien
   $('#add_room').click(function () {
     //ajouter une salle
     fetch("{% url 'planning:salle-ajax' %}", {

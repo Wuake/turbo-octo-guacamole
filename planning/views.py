@@ -1,16 +1,31 @@
-from django.shortcuts import render, get_object_or_404, redirect
+import json
+#from django.contrib.auth.decorators import user_passes_test
+from datetime import date, datetime, timedelta
+
+from django.contrib import messages
+from django.db.models import Q
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.db.models import Q
 from django.http.response import JsonResponse
-from django.contrib import messages
-#from django.contrib.auth.decorators import user_passes_test
-from datetime import date, timedelta, datetime
-import json
-# Create your views here.
+from django.shortcuts import get_object_or_404, redirect, render
 
+from .forms import CongressForm, PresentationForm, SessionForm
 from .models import *
-from .forms import CongressForm, SessionForm, PresentationForm
+
+# * Modification du titre d'une salle
+def updateText(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        id_salle = data.get("id", "")
+        updated_text = data.get("text", "")
+        if updated_text == "":
+            updated_text = "Salle"
+        # Faites ici quelque chose avec le texte mis à jour, comme l'enregistrer en base de données
+        print("id_salle : ", id_salle, " updated_text : ", updated_text)
+        Room.objects.filter(id=id_salle).update(name=updated_text)
+        return JsonResponse({"success": True})
+    else:
+        return JsonResponse({"success": False})
 
 def addOneRoom(new):
     # * Si il y a plusieurs congres,
@@ -30,7 +45,6 @@ def addOneRoom(new):
         status = "error de creation de la salle => pas de congres en cours"
 
     return JsonResponse({'status': status})
-
 
 def addRooms(new, nb):
     i=1
