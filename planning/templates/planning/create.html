@@ -107,7 +107,9 @@
 
 
   addButton.addEventListener("click", function () {
+    
     add_intervenants++
+    console.log(add_intervenants)
     var form = document.querySelector("#form_pres");
     console.log(form)
 
@@ -153,7 +155,7 @@
 
   //ajouter une pres 
   function add_prest() {
-
+    
     let url = "{% url 'planning:pres-ajax' 1234 %}".replace(/1234/, sess_sel);
     const dataToSend = JSON.stringify({
       "title": document.getElementById("pres_name").value,
@@ -189,7 +191,7 @@
 
   // selection de la salle
   function setRoomLive(room_nb, room_id, nbTotal, moderator) {
-
+    
     for (let i = 1; i <= nbTotal; i++) {
       document.getElementById('room_id' + i).style.color = '#000000';
       document.getElementById('room_id' + i).style.borderBottom = document.getElementById('room_id' + i).style
@@ -216,16 +218,21 @@
   });
 
   function load_rooms() {
+    
     let url = "{% url 'planning:load-ajax' %}";
     fetch(url)
       .then(e => e.json())
       .then(messages => {
         let div = document.getElementById("rooms");
-        div.innerHTML = '';
-        for (message of messages) {
-          construct_rooms(message);
-          console.log(message)
+        if (!div) {
+          console.error("L'élément avec l'ID 'rooms' n'existe pas");
+          return;
         }
+        // div.innerHTML = '';
+        let message = messages.pop();
+        construct_rooms(message);
+        console.log(message)
+        location.reload()
         // btn = document.createElement("button");
         // btn.innerHTML = "+"
         // btn.setAttribute("id", "add_room");
@@ -236,6 +243,7 @@
 
   //affichage du planning de la journee et de la salle
   function load_planning(room_id) {
+    
     planning_container.innerHTML = '';
     session_id = -1;
     let url = "{% url 'planning:planning-ajax' 1234 5678 %}".replace(/1234/, room_id.toString()).replace(/5678/,
@@ -256,6 +264,7 @@
   }
   //On va chercher la liste des jours et on les affiche un par un
   function construct_rooms(room) {
+    
     let div = document.getElementById("rooms");
     let a = document.createElement("a");
     a.href = "javascript:setRoomLive('" + room.number + "." + room.id + "')"; // à adapter en fonction de tes besoins
@@ -263,6 +272,7 @@
     a.style = "border-bottom: 2px solid #1ce; height: 34px; padding: 2px 7px;";
     a.innerHTML = room.number + "." + room.name;
     div.appendChild(a);
+    console.log(a)
   }
 
   // ajoute des div pour affichage du planning 
@@ -313,6 +323,14 @@
   }
 
   function select_prest(issession, sess_id, pres_id) {
+
+    // Réinitialisation des input Intervenants à 0.
+    add_intervenants = 0
+    input1.hidden = true
+    input2.hidden = true
+
+
+    // le reste
     sess_sel = sess_id;
     if (issession) {
       tmp = document.getElementById("id_sess" + sess_id);
@@ -331,7 +349,7 @@
         document.getElementById("pres_id").value = -1
       }
     }
-
+    
     if (old_sel)
       old_sel.style.color = tmp.style.color;
     tmp.style.color = "#1ce";
@@ -341,7 +359,14 @@
   }
   //edit presentation 
   function editPres( id, title, duration, author, author1, author2 )
-    { 
+    {
+      // Réinitialisation des input Intervenants à 0.
+      add_intervenants = 0
+      input1.hidden = true
+      input2.hidden = true
+
+      // Valeur des Id récupérer donné depuis views.py et afficher sur la page
+
       on_edit =true;
       document.getElementById("pres_id").value=id
       document.getElementById("pres_name").value=title
@@ -351,17 +376,15 @@
       document.getElementById("pres_author").selectedIndex = author0[0];
       document.getElementById("pres_author1").selectedIndex = author0[1];
       document.getElementById("pres_author2").selectedIndex = author0[2];
-      console.log(author)
-      console.log(author1)
-      console.log(author2)
     }
   // edit une session
   function editSession(id, title, time1, time2) {
     on_edit = true;
     document.getElementById("sess_id").value = id
     document.getElementById("sess_name").value = title.trim()
-    document.getElementById("sess_time1").value = time2.trim()
+    document.getElementById("sess_time1").value = time1.trim()
     document.getElementById("sess_time2").value = time2.trim()
+    console.log(id, title.trim(), time1.trim())
   }
   //supression session et presentation
   function delSessPres(id, is_sess) {

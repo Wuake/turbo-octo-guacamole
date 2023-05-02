@@ -1,3 +1,4 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.timezone import now
 
@@ -32,15 +33,28 @@ class Room(models.Model):
 
 # Create your models here.
 class Session(models.Model):
-	room = models.ForeignKey(Room, related_name="event_conf_room", on_delete=models.CASCADE)
-	date = models.ForeignKey(Day, to_field='date', default='self.date',  on_delete=models.CASCADE) # models.DateField(default=now, blank=True) # to_field='date', default='self.date'
-	title = models.CharField(max_length=250)
-	order = models.SmallIntegerField(default=1)  #numero de la session pour order
-	time_start = models.TimeField(default=now, blank=True)
-	time_end = models.TimeField(default=now, blank=True)
-	
-	def __str__(self):
-		return self.title
+    room = models.ForeignKey(Room, related_name="event_conf_room", on_delete=models.CASCADE)
+    date = models.ForeignKey(Day, to_field='date', default='self.date', on_delete=models.CASCADE)
+    title = models.CharField(max_length=250)
+    order = models.SmallIntegerField(default=1)
+    time_start = models.TimeField(default=now, blank=True)
+    time_end = models.TimeField(default=now, blank=True)
+
+    def clean(self):
+        overlapping_sessions = Session.objects.filter(
+            room=self.room,
+            date=self.date,
+            time_start__lt=self.time_end,
+            time_end__gt=self.time_start,
+        ).exclude(pk=self.pk)
+
+        if overlapping_sessions.exists():
+            raise ValidationError("Cette session se chevauche avec une autre session existante.")
+
+    def __str__(self):
+        return self.title
+
+    
 
 class Presentation(models.Model):
 	session = models.ForeignKey(Session, related_name="event_conf_name", on_delete=models.CASCADE)

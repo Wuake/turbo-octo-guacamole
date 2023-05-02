@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
+from django.db.models import Q
 from django.http.response import JsonResponse
 from django.contrib import messages
 #from django.contrib.auth.decorators import user_passes_test
@@ -161,9 +162,11 @@ def ajax_load_planning(request, pk, date):
             "duration": presentation.duration,
             "session_id": presentation.session_id,
             "session_title": presentation.session.title,
-            "time_begin": presentation.session.time_start,
-            "time_end": presentation.session.time_end,
+            "time_begin": presentation.session.time_start.strftime('%H:%M'),
+            
+            "time_end": presentation.session.time_end.strftime('%H:%M'),
         }
+        print(presentation.session.time_start.strftime('%H:%M'), presentation.session.time_end.strftime('%H:%M'))
         presentations_list.append(presentation_dict)
 
     return JsonResponse(presentations_list, safe=False)
@@ -186,7 +189,6 @@ def ajax_load_rooms(request):
 
 #@login_required
 def ajax_add_session(request, pk):
-    #posts = Post.objects.all()
     response_data = {}
     today = date.today()
     if request.method == 'POST':
@@ -195,29 +197,52 @@ def ajax_add_session(request, pk):
         try:
             new = Session.objects.get(id=int(jsonbody['id']))
         except Session.DoesNotExist:
-            new = None  
-       
-        if new :
-            new.title=jsonbody['title']
-            new.time_start=jsonbody['time1']
-            new.time_end=jsonbody['time2']
-            new.save()
-        else :
-            sess = Session.objects.create( room_id = pk,
-                                            date_id = jsonbody['date'],
-                                            title = jsonbody['title'],
-                                            time_start= jsonbody['time1'],
-                                            time_end= jsonbody['time2'],
-                                            )
-            if sess :
-                Presentation.objects.create(
-                session_id = sess.id,
-                title = 'Présentation',
-                # author= 'autheur',
-                duration= 30,
+            new = None
+
+        if new is None:
+            start_time = datetime.strptime(jsonbody['time1'], '%H:%M').time()
+            end_time = datetime.strptime(jsonbody['time2'], '%H:%M').time()
+            date_id = jsonbody['date']
+            existing_sessions = Session.objects.filter(
+                Q(room_id=pk) & Q(date_id=date_id) &
+                (Q(time_start__lt=end_time) & Q(time_end__gt=start_time))
+            )
+            if existing_sessions.exists():
+                response_data['error'] = 'Une session existe déjà à ce moment-là'
+            else:
+                sess = Session.objects.create(
+                    room_id=pk,
+                    date_id=date_id,
+                    title=jsonbody['title'],
+                    time_start=start_time,
+                    time_end=end_time
                 )
-    presentations_list = { }
-    return JsonResponse(presentations_list, safe=False)
+                if sess:
+                    Presentation.objects.create(
+                        session_id=sess.id,
+                        title='Présentation',
+                        duration=30,
+                    )
+                response_data['success'] = 'Session créée avec succès'
+        else:
+            start_time = datetime.strptime(jsonbody['time1'], '%H:%M').time()
+            end_time = datetime.strptime(jsonbody['time2'], '%H:%M').time()
+            date_id = jsonbody['date']
+            existing_sessions = Session.objects.filter(
+                Q(room_id=pk) & Q(date_id=date_id) & ~Q(id=new.id) &
+                (Q(time_start__lt=end_time) & Q(time_end__gt=start_time))
+            )
+            if existing_sessions.exists():
+                response_data['error'] = 'Une session existe déjà à ce moment-là'
+            else:
+                new.title = jsonbody['title']
+                new.time_start = start_time
+                new.time_end = end_time
+                new.save()
+                response_data['success'] = 'Session mise à jour avec succès'
+
+    presentations_list = {}
+    return JsonResponse(response_data, safe=False)
 
 #@login_required
 def ajax_add_pres(request, pk):
@@ -232,13 +257,6 @@ def ajax_add_pres(request, pk):
         response_data['author'] = jsonbody['author']
         response_data['author1'] = jsonbody['author1']
         response_data['author2'] = jsonbody['author2']
-        # print("------------------")
-        # print(response_data['author'])
-        # print("----")
-        # print(response_data['author1'])
-        # print("----")
-        # print(response_data['author2'])
-        # print("------------------")
 
         # ! REGLER LE BUG DE MODIFICATION DES INFORMATIONS DE PRESENTATION
 
@@ -249,7 +267,7 @@ def ajax_add_pres(request, pk):
             new = None           
             
         if new :
-            print("modify")
+            
             new.session_id = pk
             new.title=jsonbody['title']
             
@@ -258,41 +276,29 @@ def ajax_add_pres(request, pk):
             InterPresent.objects.filter(id_presentation=new).delete()
             new.save()
         else :
-            print("add")
+        
             new =  Presentation.objects.create( session_id = pk,
                                                 title = jsonbody['title'],
                                                 # author= jsonbody['author'],
                                                 duration= jsonbody['duration'],
                                                 )
-            dernier_id = Presentation.objects.latest('id').id
-            # print(dernier_id)
         
-        print('----------------------Test---------------------------')
 
         try:
             new_inter = InterPresent.objects.get(id=int(jsonbody['id']))
             new_intervenant = Intervenant.objects.get(id=int(jsonbody['author']))
-            # print(new_intervenant)
             new_intervenant1 = Intervenant.objects.get(id=int(jsonbody['author1']))
-            # print(new_intervenant1)
             new_intervenant2 = Intervenant.objects.get(id=int(jsonbody['author2']))
-            # print(new_intervenant2)
             
         except InterPresent.DoesNotExist:
             new_inter = None
             new_intervenant = Intervenant.objects.get(id=int(jsonbody['author']))
-            # print(jsonbody['author'])
             if(jsonbody['author1']):
-                # print(jsonbody['author1'])
                 new_intervenant1 = Intervenant.objects.get(id=int(jsonbody['author1']))
                 
                 if(jsonbody['author2']):
-                    # print(jsonbody['author2'])
                     new_intervenant2 = Intervenant.objects.get(id=int(jsonbody['author2']))
-    
-        # print('---------------------- Fin de Test---------------------------')
 
-        print('------------------Passé--------------------')
 
         if new_inter :
             new_inter.id_presentation = new
@@ -319,9 +325,7 @@ def ajax_add_pres(request, pk):
                                                      id_intervenant = new_intervenant,
                                                      )
             else:
-                print(existing_inter.first().id)
                 existing_inter.first().delete()
-                print(existing_inter.first().id)
                 new_inter = InterPresent.objects.create( id_presentation = new,
                                                      id_intervenant = new_intervenant,
                                                      )
