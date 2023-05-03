@@ -46,7 +46,15 @@ background: #eee;
 .list-group{
   width: 100%;
 }
-
+#del_room{
+	background-color: inherit;
+	width: 3rem;
+	border: none;
+	border-radius: 5px;
+}
+#del_room:hover{
+	background-color: red;
+}
   /* hr pour ne pas avoir d'espace en haut dans le live */
   hr.divider { 
 	margin-top: 0em;

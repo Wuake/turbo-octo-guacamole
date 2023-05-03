@@ -14,6 +14,7 @@ urlpatterns = [
     #ajout d'une salle
     path("salle-ajax/", views.addOneRoom, name="salle-ajax"),
     path("load-ajax/", views.ajax_load_rooms, name="load-ajax"),
-    # modification d'un nom de salle
+    # modification d'une salle
     path("salle-modif-ajax/", views.updateText, name="salle-modif-ajax"),
+    path("salle-del-ajax/", views.deleteRoom, name="salle-del-ajax"),
 ]

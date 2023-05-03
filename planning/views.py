@@ -12,6 +12,18 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import CongressForm, PresentationForm, SessionForm
 from .models import *
 
+# * Suppression d'une salle
+def deleteRoom(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        id_salle = data.get("id", "")
+        print("id_salle : ", id_salle)
+        # Faites ici quelque chose avec le texte mis à jour, comme l'enregistrer en base de données
+        Room.objects.filter(id=id_salle).delete()
+        return JsonResponse({"success": True})
+    else:
+        return JsonResponse({"success": False})
+
 # * Modification du titre d'une salle
 def updateText(request):
     if request.method == "POST":
@@ -37,7 +49,10 @@ def addOneRoom(new):
         new = None
     if new :
         rooms = Room.objects.all()
-        Room.objects.create(congress= new , number=str(rooms.count()+1), name="Salle "+str(rooms.count()+1))
+        # On va chercher le dernier nom de la salle et on vérifie qu'il s'agit du type "Salle NOMBRE"
+        last_room = Room.objects.latest('number')
+        print("CoNFORTAAAA" ,last_room.number)
+        Room.objects.create(congress= new , number=str(last_room.number+1), name="Salle "+str(last_room.number+1))
         status = "salle ajoutée"
     else :
         #retournement d'erreur
