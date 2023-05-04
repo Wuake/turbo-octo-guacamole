@@ -1,0 +1,84 @@
+{% extends 'Planning/base.html' %}
+{% load static %}
+{% block title%}Webeeconf{% endblock %}
+
+{% block body %} 
+
+<div class="container">
+    <div class="row"> 
+        <hr>
+        
+        <div class="col-md-6 intervenant_list">
+            <h2>Liste des intervenants</h2>
+            
+            <div class="container">
+                <div class="floating-stack">
+                  <dl>
+                    <dt>A</dt>
+                    <dd>Algeria</dd>
+                    <dd>Angola</dd>
+              
+                    <dt>B</dt>
+                    <dd>Benin</dd>
+                    <dd>Botswana</dd>
+                    <dd>Burkina Faso</dd>
+                    <dd>Burundi</dd>
+              
+                    <dt>C</dt>
+                    <dd>Cabo Verde</dd>
+                    <dd>Cameroon</dd>
+                    <dd>Central African Republic</dd>
+                    <dd>Chad</dd>
+                    <dd>Comoros</dd>
+                    <dd>Congo, Democratic Republic of the</dd>
+                    <dd>Congo, Republic of the</dd>
+                    <dd>Cote d'Ivoire</dd>
+              
+                    <dt>D</dt>
+                    <dd>Djibouti</dd>
+              
+                    <dt>E</dt>
+                    <dd>Egypt</dd>
+                    <dd>Equatorial Guinea</dd>
+                    <dd>Eritrea</dd>
+                    <dd>Eswatini (formerly Swaziland)</dd>
+                    <dd>Ethiopia</dd>
+                  </dl>
+                </div>
+              </div>
+
+            <ul>
+                {% for intervenant in intervenants %}
+                    <li>{{ intervenant.nom }} {{ intervenant.prenom }}</li>
+                {% empty %}
+                    <li>Aucun intervenant trouvé.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="col-md-6 intervenant_create">
+            <div class="col_md-12">
+                <h2>Créer un nouvel intervenant</h2>
+
+                
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+
+                    <button type="submit" class="btn btn-primary">Créer</button>
+                </form>
+            </div>
+            
+            <div class="col-md-12">
+                <h2>Importer des fichiers</h2>
+    
+                <!-- code HTML pour importer des fichiers -->
+            </div>
+        </div>
+
+        
+    </div>
+</div>
+
+{% endblock %}

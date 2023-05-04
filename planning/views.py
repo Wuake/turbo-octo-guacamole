@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
+import socket
 from django.db.models import Q
 from django.http.response import JsonResponse
 from django.contrib import messages
@@ -10,7 +11,7 @@ import json
 # Create your views here.
 
 from .models import *
-from .forms import CongressForm, SessionForm, PresentationForm
+from .forms import CongressForm, SessionForm, PresentationForm, IntervenantForm
 
 def addOneRoom(new):
     # * Si il y a plusieurs congres,
@@ -95,6 +96,43 @@ def show_plan(request):
     congres = Congress.objects.get()
     rooms = Room.objects.filter(congress__pk=congres.pk)
     return render(request, 'Planning/show.html', {'rooms': rooms})
+
+def show_pupitre(request):
+    congres = Congress.objects.get()
+    rooms = Room.objects.filter(congress__pk=congres.pk)
+    days = Day.objects.filter(congress__pk=congres.pk)
+    pform = PresentationForm()
+    sform = SessionForm()
+    return render(request, "Planning/pupitre.html", {'rooms': rooms,'days': days,"sess_form":sform, "pres_form":pform}) 
+
+def show_intervenant(request):
+    # récupération de tous les intervenants existants
+    intervenants = Intervenant.objects.all()
+
+    # vérification si la méthode de la requête est POST
+    if request.method == 'POST':
+        # création d'un formulaire à partir de la requête POST
+        form = IntervenantForm(request.POST)
+
+        # vérification si le formulaire est valide
+        if form.is_valid():
+            # sauvegarde de l'intervenant créé
+            form.save()
+
+            # redirection vers la page affichant tous les intervenants
+            return redirect('show_intervenant')
+    else:
+        # création d'un formulaire vide
+        form = IntervenantForm()
+
+    # contexte à transmettre au template
+    context = {
+        'intervenants': intervenants,
+        'form': form,
+    }
+
+    # rendu du template
+    return render(request, 'Planning/intervenant.html', context)
 
 """
 #@login_required
@@ -187,6 +225,8 @@ def ajax_load_rooms(request):
     return JsonResponse(rooms_list, safe=False)
 
 
+
+
 #@login_required
 def ajax_add_session(request, pk):
     response_data = {}
@@ -250,13 +290,19 @@ def ajax_add_pres(request, pk):
     response_data = {}
     today = date.today()
     if request.method == 'POST':
+        fichier = request.FILES['fichier_pptx']
+        print(fichier)
         jsonbody = json.loads(request.body)
+
+        print(request.body)
 
         response_data['title'] = jsonbody['title']
         response_data['time2'] = jsonbody['duration']
+        # response_data['fichier'] = jsonbody['fichier']
         response_data['author'] = jsonbody['author']
         response_data['author1'] = jsonbody['author1']
         response_data['author2'] = jsonbody['author2']
+
 
         # ! REGLER LE BUG DE MODIFICATION DES INFORMATIONS DE PRESENTATION
 
@@ -273,14 +319,16 @@ def ajax_add_pres(request, pk):
             
             # new.author=jsonbody['author']
             new.duration=jsonbody['duration']
+            # new.fichier = jsonbody['fichier']
             InterPresent.objects.filter(id_presentation=new).delete()
             new.save()
         else :
-        
+            print(jsonbody["fichier"])
             new =  Presentation.objects.create( session_id = pk,
                                                 title = jsonbody['title'],
                                                 # author= jsonbody['author'],
                                                 duration= jsonbody['duration'],
+                                                # fichier_pptx = jsonbody['fichier'],
                                                 )
         
 
@@ -353,5 +401,38 @@ def ajax_del_pres(request, pk):
         else : 
             Presentation.objects.filter(id=pk).delete()
     
-    return JsonResponse({}, safe=False)    
+    return JsonResponse({}, safe=False)
+
+def open_ppt(host, ppt_file):
+    host = host
+    port = 5000
+    message = f"open_ppt@{ppt_file}".encode()
+    # create socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        # connect to server
+        sock.connect((host, port))
+        # send string to server
+        sock.sendall(message)
+        # get server response
+        response = sock.recv(1024)
+        # decode the response and return it
+        return response.decode()
+
+
+
+def ouvrir_presentation(request):
+
+    data = json.loads(request.body)
+    id_pres = data.get('id', '')
+    print(id_pres)
+
+    presentation = Presentation.objects.get(id=id_pres)
+    print(presentation)
+    fichier_pptx = presentation.fichier_pptx
+    print(fichier_pptx.path)
+
+    open_ppt("192.168.0.162", fichier_pptx.path)
+    
+
+    return JsonResponse({"success": True})
     
