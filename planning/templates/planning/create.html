@@ -164,10 +164,8 @@
       "author1": document.getElementById("pres_author1").value,
       "author2": document.getElementById("pres_author2").value,
       "duration": document.getElementById("pres_duration").value,
-      "fichier": document.getElementById("pres_fichier").files[0].name,
       "date": date_sel,
     });
-    console.log(document.getElementById("pres_fichier").files)
     fetch(url, {
       method: "POST",
       credentials: 'same-origin',
@@ -182,7 +180,6 @@
     });
 
     console.log(document.getElementById("pres_author").value)
-    console.log(document.getElementById("pres_fichier").value)
     console.log(document.getElementById("pres_author1").value)
     console.log(document.getElementById("pres_author2").value)
 
@@ -319,7 +316,7 @@
             </span> 
           </div>        
           
-        </i>
+        </li>
         `
     //div.setAttribute("id", "id_pres"+ pres.id ); 
     planning_container.appendChild(div);

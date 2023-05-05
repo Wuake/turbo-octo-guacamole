@@ -290,15 +290,12 @@ def ajax_add_pres(request, pk):
     response_data = {}
     today = date.today()
     if request.method == 'POST':
-        fichier = request.FILES['fichier_pptx']
-        print(fichier)
         jsonbody = json.loads(request.body)
 
         print(request.body)
 
         response_data['title'] = jsonbody['title']
         response_data['time2'] = jsonbody['duration']
-        # response_data['fichier'] = jsonbody['fichier']
         response_data['author'] = jsonbody['author']
         response_data['author1'] = jsonbody['author1']
         response_data['author2'] = jsonbody['author2']
@@ -328,7 +325,6 @@ def ajax_add_pres(request, pk):
                                                 title = jsonbody['title'],
                                                 # author= jsonbody['author'],
                                                 duration= jsonbody['duration'],
-                                                # fichier_pptx = jsonbody['fichier'],
                                                 )
         
 
@@ -435,4 +431,32 @@ def ouvrir_presentation(request):
     
 
     return JsonResponse({"success": True})
+
+
+
+def show_upload(request):
+    intervenant_all = Intervenant.objects.all()
+    print("ok")
+    return render(request, 'Planning/upload.html', {'intervenant_all': intervenant_all})
+
+def intervenant_select(request):
+
+    data = json.loads(request.body)
+    id = data.get('id', '')
+
+    print(id)
+    presentations = Presentation.objects.filter(interpresent__id_intervenant=id)
+    presentation_list = []
+
+    for presentation in presentations:
+        presentation_list.append({
+            'id': presentation.id,
+            'title': presentation.title,
+            'duration': presentation.duration,
+            'fichier_pptx': presentation.fichier_pptx.url if presentation.fichier_pptx else None
+        })
+
+    print(presentation_list)
+
     
+    return JsonResponse({"presentations": presentation_list})

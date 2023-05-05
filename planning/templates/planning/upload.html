@@ -1,0 +1,141 @@
+{% extends 'Planning/base.html' %}
+{% load static %}
+{% block title%}Upload{% endblock %}
+
+{% block body %}
+
+<div class="container">
+    <div class="row">
+        <hr>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body" data-mdb-perfect-scrollbar="true"
+                    style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+
+                    <div class="list-group planning-area">
+                        <!-- planning area by ajax -->
+
+
+                        {% for intervenant in intervenant_all %}
+
+                        <li id="{{ intervenant.id }}"
+                            class="list-group-item personne align-items-start list-group-item-action">
+                            <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
+                            <div class="d-flex w-100 justify-content-between">
+                                <img src="{{ intervenant.logo.url }}"
+                                    style="width: 75px;height: 75px;border-radius: 30rem;">
+                                <h5 class="mb-1" style="align-self: center;"> {{ intervenant }} </h5>
+                                <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
+                                    <a href="#"
+                                        onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
+                                        class=" bi-pencil-fill text-secondary"></a>
+                                </span>-->
+                            </div>
+
+                        </li>
+
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div id="presta_container" class="card-body" data-mdb-perfect-scrollbar="true"
+                    style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+
+                    <div class="list-group planning-area">
+                        <!-- planning area by ajax -->
+                        {{ presentations }}
+
+                        {# {% for presentation in presentations %}
+                        
+                        <li id="{{ presentation.id }}" class="list-group-item align-items-start list-group-item-action">
+                            <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1" style="align-self: center;"> {{ presentation.title }} </h5>
+                                <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
+                                    <a href="#"
+                                        onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
+                                        class=" bi-pencil-fill text-secondary"></a>
+                                </span>-->
+                            </div>
+
+                        </li>
+
+                        {% endfor %} #}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="js_data" data-url="" data-csrf="{{csrf_token}}" />
+</div>
+
+<script type="text/javascript" defer>
+    let csrf_token = $("#js_data").attr("data-csrf");
+    var liste_personnes = document.querySelectorAll('.personne')
+
+    console.log(liste_personnes[0])
+    for (var i = 0; i < liste_personnes.length; i++) {
+        liste_personnes[i].addEventListener("click", function () {
+            console.log(this.id)
+
+            fetch("{% url 'planning:upload_intervenant' %}", {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        "X-CSRFToken": csrf_token,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: this.id,
+                    }),
+                }).then(response => response.json())
+                .then(data => {
+                    // faire quelque chose avec les données renvoyées
+                    console.log(data.presentations);
+                    data.presentations.forEach(presta => {
+                        console.log(presta)
+                        // construct_presta(presta)
+                    });
+                    // for (i = 0; i <= data.presentations.length; i++){
+                    //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
+                    //     construct_presta()
+                    // }
+                })
+                .catch(error => console.error(error));
+
+        })
+    }
+
+    function construct_presta() {
+        let div = document.createElement("div");
+        if (session_id != pres.session_id) {
+            // CHANGER LE CONTENU
+            div.innerHTML = `
+                <li id="id_sess${ pres.session_id }" class="list-group-item list-group-item-warning  align-items-start  list-group-item-action" onclick="select_prest( 1,${ pres.session_id }, ${ pres.session_id } )">                
+                 <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1"> ${ pres.session_title } </h5>
+                  <span class=" float-end">  
+                    <a href="#"  onclick="editSession( '${ pres.session_id }',' ${ pres.session_title }',' ${ pres.time_begin }',' ${ pres.time_end }')" class=" bi-pencil-fill text-secondary"></a> 
+                  </span> 
+                </div>  
+                  <div class="d-flex w-100 justify-content-between">
+                    <small> ${ pres.time_begin }  -> ${ pres.time_end } </small>
+                    <span class=" float-end">  
+                      <a href="#"  onclick="delSessPres( ${ pres.session_id },1)" class=" bi-trash text-warning"></a></span> 
+                    </span> 
+                  </div>  
+                </li>
+                `
+        }
+    }
+
+    document.getElementById("presta_container").appendChild(div);
+    div.scrollIntoView()
+</script>
+
+{% endblock %}
