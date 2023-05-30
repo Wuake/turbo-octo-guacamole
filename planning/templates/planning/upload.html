@@ -49,7 +49,7 @@
                         <!-- planning area by ajax -->
                         {{ presentations }}
 
-                        {# {% for presentation in presentations %}
+                        {% for presentation in presentations %}
                         
                         <li id="{{ presentation.id }}" class="list-group-item align-items-start list-group-item-action">
                             <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
@@ -64,7 +64,7 @@
 
                         </li>
 
-                        {% endfor %} #}
+                        {% endfor %}
                     </div>
 
                 </div>
@@ -95,11 +95,12 @@
                     }),
                 }).then(response => response.json())
                 .then(data => {
-                    // faire quelque chose avec les données renvoyées
-                    console.log(data.presentations);
+                    // on vide le contenu hmtl pour éviter les doublons
+                    document.getElementById("presta_container").innerHTML = "";
+                    // console.log(data.presentations);
                     data.presentations.forEach(presta => {
-                        console.log(presta)
-                        // construct_presta(presta)
+                        // console.log(presta)
+                        construct_presta(presta)
                     });
                     // for (i = 0; i <= data.presentations.length; i++){
                     //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
@@ -110,32 +111,69 @@
 
         })
     }
-
-    function construct_presta() {
-        let div = document.createElement("div");
-        if (session_id != pres.session_id) {
-            // CHANGER LE CONTENU
-            div.innerHTML = `
-                <li id="id_sess${ pres.session_id }" class="list-group-item list-group-item-warning  align-items-start  list-group-item-action" onclick="select_prest( 1,${ pres.session_id }, ${ pres.session_id } )">                
-                 <div class="d-flex w-100 justify-content-between">
-                  <h5 class="mb-1"> ${ pres.session_title } </h5>
-                  <span class=" float-end">  
-                    <a href="#"  onclick="editSession( '${ pres.session_id }',' ${ pres.session_title }',' ${ pres.time_begin }',' ${ pres.time_end }')" class=" bi-pencil-fill text-secondary"></a> 
-                  </span> 
-                </div>  
-                  <div class="d-flex w-100 justify-content-between">
-                    <small> ${ pres.time_begin }  -> ${ pres.time_end } </small>
-                    <span class=" float-end">  
-                      <a href="#"  onclick="delSessPres( ${ pres.session_id },1)" class=" bi-trash text-warning"></a></span> 
-                    </span> 
-                  </div>  
-                </li>
-                `
-        }
+    function uploadFile() {
+        var data = new FormData();
+        data.append("file", $("input[id^='file']")[0].files[0]);
+        data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+        $.ajax({
+            method: "POST",
+            url: "{% url 'planning:upload' %}",
+            processData: false,
+            contentType: false,
+            mimeType: "multipart/form-data",
+            data: data,
+            success: function(res) {
+                console.log(res)
+            }
+        })
     }
+    
 
-    document.getElementById("presta_container").appendChild(div);
-    div.scrollIntoView()
+    function construct_presta(presentation) {
+        let div = document.createElement("div");
+        // CHANGER LE CONTENU
+        div.innerHTML = `
+            <li id="${presentation.id}" class="list-group-item align-items-start list-group-item-action" onclick="">                
+                <div id="list_presentation_block1" class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1"> ${presentation.title}</h5>
+                    <span class=" float-end">
+                        <p id="check_mark" hidden>✅</p>
+                        <p id="cross_mark">❌</p>
+                    </span> 
+                </div>
+                <div id="list_presentation_block2" class="d-flex w-100 justify-content-between">
+                    <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } min</h6>
+                    <span class=" float-end"> 
+                        <input id="file" class="form-control mb-3" type="file">
+                        </span>
+                        <button class="btn btn-primary float-end" type="submit" onclick="uploadFile();">Submit Form</button>
+                </div>
+            </li>
+            <br/>
+            `
+        document.getElementById("presta_container").appendChild(div);
+        div.scrollIntoView()
+        // dynamic_display()
+    }
+    // TO DO : Fonction qui permet l'affichage dynamique des emoji (check ou croix)
+    // function dynamic_display(){
+    //     let check_mark = document.getElementById("check_mark")
+    //     let cross_mark = document.getElementById("cross_mark")
+    //     let list_input_pptx = document.getElementsByTagName("#input_pptx") 
+    //     // Evenement change lancé lors de l'upload d'un fichier
+    //     // input_pptx.addEventListener("change", dynamic_display)
+
+    //     if (input_pptx.value != ""){
+    //         check_mark.hidden = false
+    //         cross_mark.hidden = true
+    //     }
+    //     else{
+    //         check_mark.hidden = true
+    //         cross_mark.hidden = false
+    //     }
+    // }
+
+
 </script>
 
 {% endblock %}

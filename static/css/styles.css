@@ -129,5 +129,21 @@ background: #eee;
 	cursor: pointer;
 	color: rgb(57, 170, 46);
 }
-  
-  
+#list_presentation_block1{
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+
+}
+#list_presentation_block2{
+    display: flex;
+    justify-content: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #cfcfcf;
+}
+#duree {
+    align-self: center;
+    margin: 0;
+}

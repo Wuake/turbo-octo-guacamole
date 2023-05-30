@@ -30,6 +30,10 @@ urlpatterns = [
     path('', views.home, name="home"),
     path('plan/', show_plan, name="show_plan"),
     re_path(r'^planning/', include('planning.urls')),
+
+
+# Admin Admin
+
     re_path(r'^admin/', admin.site.urls, name='admin'),
  
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -3,10 +3,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import Http404
 import socket
 from django.db.models import Q
+from django.core.files.storage import FileSystemStorage
 from django.http.response import JsonResponse
 from django.contrib import messages
 #from django.contrib.auth.decorators import user_passes_test
 from datetime import date, timedelta, datetime
+from django.core.files.base import ContentFile
+import base64
 import json
 # Create your views here.
 
@@ -151,7 +154,6 @@ def ajax_load_planning(request, pk, date):
         "session_title": presentation.session.title,
         "time_begin": presentation.session.time_start,
         "time_end": presentation.session.time_end,
-
     } for presentation in presentations ]
     
     return JsonResponse(presentations_list, safe=False)
@@ -456,7 +458,18 @@ def intervenant_select(request):
             'fichier_pptx': presentation.fichier_pptx.url if presentation.fichier_pptx else None
         })
 
-    print(presentation_list)
-
+    # print(presentation_list)
     
     return JsonResponse({"presentations": presentation_list})
+
+def upload_file(request):
+    file = request.FILES.get("file")
+
+    # fss = FileSystemStorage()
+    # filename = fss.save(file.name, file)
+    # url = fss.url(filename)
+    print(file)
+    data = ContentFile(base64.b64decode(file), name=file.name) 
+    Presentation.objects.create(doc=data)
+    print(data)
+    return JsonResponse({"link": data})

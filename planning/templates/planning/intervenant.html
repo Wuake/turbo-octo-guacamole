@@ -7,78 +7,101 @@
 <div class="container">
     <div class="row"> 
         <hr>
-        
-        <div class="col-md-6 intervenant_list">
-            <h2>Liste des intervenants</h2>
-            
-            <div class="container">
-                <div class="floating-stack">
-                  <dl>
-                    <dt>A</dt>
-                    <dd>Algeria</dd>
-                    <dd>Angola</dd>
-              
-                    <dt>B</dt>
-                    <dd>Benin</dd>
-                    <dd>Botswana</dd>
-                    <dd>Burkina Faso</dd>
-                    <dd>Burundi</dd>
-              
-                    <dt>C</dt>
-                    <dd>Cabo Verde</dd>
-                    <dd>Cameroon</dd>
-                    <dd>Central African Republic</dd>
-                    <dd>Chad</dd>
-                    <dd>Comoros</dd>
-                    <dd>Congo, Democratic Republic of the</dd>
-                    <dd>Congo, Republic of the</dd>
-                    <dd>Cote d'Ivoire</dd>
-              
-                    <dt>D</dt>
-                    <dd>Djibouti</dd>
-              
-                    <dt>E</dt>
-                    <dd>Egypt</dd>
-                    <dd>Equatorial Guinea</dd>
-                    <dd>Eritrea</dd>
-                    <dd>Eswatini (formerly Swaziland)</dd>
-                    <dd>Ethiopia</dd>
-                  </dl>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body" data-mdb-perfect-scrollbar="true"
+                    style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+
+                    <div class="list-group planning-area">
+                        <!-- planning area by ajax -->
+
+
+                        {% for intervenant in intervenants %}
+
+                        <li id="{{ intervenant.id }}"
+                            class="list-group-item personne align-items-start list-group-item-action">
+                            <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
+                            <div class="d-flex w-100 justify-content-between">
+                                <img src="{{ intervenant.logo.url }}"
+                                    style="width: 75px;height: 75px;border-radius: 30rem;">
+                                <h5 class="mb-1" style="align-self: center;"> {{ intervenant }} </h5>
+                                <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
+                                    <a href="#"
+                                        onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
+                                        class=" bi-pencil-fill text-secondary"></a>
+                                </span>-->
+                            </div>
+
+                        </li>
+
+                        {% endfor %}
+                    </div>
+
                 </div>
-              </div>
-
-            <ul>
-                {% for intervenant in intervenants %}
-                    <li>{{ intervenant.nom }} {{ intervenant.prenom }}</li>
-                {% empty %}
-                    <li>Aucun intervenant trouvé.</li>
-                {% endfor %}
-            </ul>
-        </div>
-
-        <div class="col-md-6 intervenant_create">
-            <div class="col_md-12">
-                <h2>Créer un nouvel intervenant</h2>
-
-                
-
-                <form method="post">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-
-                    <button type="submit" class="btn btn-primary">Créer</button>
-                </form>
-            </div>
-            
-            <div class="col-md-12">
-                <h2>Importer des fichiers</h2>
-    
-                <!-- code HTML pour importer des fichiers -->
             </div>
         </div>
+
+        <div class="col-md-6">
+            <br>
+            <div id="form_sess">
+              {# {{ sess_form|crispy }} #}
+              <hr>
+              <button class="btn btn-info" id="sess_submit">Valider Session</button>
+            </div>
+            <div id="form_pres" display='none'>
+              {# {{ pres_form|crispy }} #}
+      
+              <button type="button" id="add_field" class="btn btn-secondary">Intervenant supplémentaire</button>
+              <hr>
+              <button class="btn btn-primary" id="pres_submit">Valider Présentation</button>
+            </div>
+          </div>
 
         
     </div>
 </div>
+
+
+<script type="text/javascript" defer>
+    let csrf_token = $("#js_data").attr("data-csrf");
+    var liste_personnes = document.querySelectorAll('.personne')
+
+    console.log(liste_personnes[0])
+    for (var i = 0; i < liste_personnes.length; i++) {
+        liste_personnes[i].addEventListener("click", function () {
+            console.log(this.id)
+
+            fetch("{% url 'planning:upload_intervenant' %}", {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        "X-CSRFToken": csrf_token,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: this.id,
+                    }),
+                }).then(response => response.json())
+                .then(data => {
+                    // on vide le contenu hmtl pour éviter les doublons
+                    document.getElementById("presta_container").innerHTML = "";
+                    // console.log(data.presentations);
+                    data.presentations.forEach(presta => {
+                        // console.log(presta)
+                        construct_presta(presta)
+                    });
+                    // for (i = 0; i <= data.presentations.length; i++){
+                    //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
+                    //     construct_presta()
+                    // }
+                })
+                .catch(error => console.error(error));
+
+        })
+    }
+    
+
+
+</script>
 
 {% endblock %}

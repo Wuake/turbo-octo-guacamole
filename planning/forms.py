@@ -1,4 +1,4 @@
-from planning.models import Congress, InterPresent, Intervenant
+from planning.models import Congress, InterPresent, Intervenant, Presentation
 from django import forms
 
        
@@ -25,8 +25,10 @@ class PresentationForm(forms.Form):
     author1 = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author1"}) )
     author2 = forms.ModelChoiceField(queryset=Intervenant.objects.all(), label='',widget=forms.Select(attrs={'placeholder': 'Auteurs', 'id':"pres_author2"}) )
 
-
-
+class UploadForm(forms.ModelForm):
+    class Meta:
+        model = Presentation
+        fields = ('fichier_pptx',)
 
 class IntervenantForm(forms.ModelForm):
     class Meta:
