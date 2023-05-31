@@ -46,15 +46,7 @@ background: #eee;
 .list-group{
   width: 100%;
 }
-#del_room{
-	background-color: inherit;
-	width: 3rem;
-	border: none;
-	border-radius: 5px;
-}
-#del_room:hover{
-	background-color: red;
-}
+
   /* hr pour ne pas avoir d'espace en haut dans le live */
   hr.divider { 
 	margin-top: 0em;
@@ -63,4 +55,114 @@ background: #eee;
   hr.divider-b { 
 	margin-bottom: 0em;
 	border-width: 2px;
-  } 
+  }
+
+.intervenant_list {
+	background-color: #1ce;
+	height: 48rem;
+}
+
+
+.intervenant_create {
+	background-color: blanchedalmond;
+	height: 48rem;
+}
+
+.floating-stack {
+	background: #455a64;
+	color: #fff;
+	height: 300px;
+	width: 320px;
+	border-radius: 1rem;
+	overflow-y: auto;
+  }
+  
+  .floating-stack > dl {
+	margin: 0 0 1rem;
+	display: grid;
+	grid-template-columns: 2.5rem 1fr;
+	align-items: center;
+  }
+  
+  .floating-stack dt {
+	position: sticky;
+	top: 0.5rem;
+	left: 0.5rem;
+	font-weight: bold;
+	background: #263238;
+	color: #cfd8dc;
+	height: 2rem;
+	width: 2rem;
+	border-radius: 50%;
+	padding: 0.25rem 1rem;
+	grid-column: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+  }
+  
+  .floating-stack dd {
+	grid-column: 2;
+	margin: 0;
+	padding: 0.75rem;
+  }
+  
+  .floating-stack > dl:first-of-type > dd:first-of-type {
+	margin-top: 0.25rem;
+  }
+
+  .presta{
+	display: flex;
+  }
+
+#part1_pres{
+	width: 50%;
+	height: 100%;
+}
+#part2_pres{
+	display: flex;
+	justify-content: center;
+	width: 50%;
+}
+#btn-lancement{
+	cursor: pointer;
+	color: rgb(57, 170, 46);
+}
+#list_presentation_block1{
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+
+}
+#list_presentation_block2{
+    display: flex;
+    justify-content: center;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #cfcfcf;
+}
+#duree {
+    align-self: center;
+    margin: 0;
+}
+#overlay{
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0,0,0,0.5);
+	display: none;
+}
+#page_upload{
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 77rem;
+	height: 12rem;
+	transform: translate(-50%, -50%);
+	background-color: #dbdbdb;
+	border-radius: 5px;
+}

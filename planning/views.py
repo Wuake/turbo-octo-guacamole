@@ -1,43 +1,20 @@
-import json
-#from django.contrib.auth.decorators import user_passes_test
-from datetime import date, datetime, timedelta
-
-from django.contrib import messages
-from django.db.models import Q
+from django.shortcuts import render, get_object_or_404, redirect
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
+import socket
+from django.db.models import Q
+from django.core.files.storage import FileSystemStorage
 from django.http.response import JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+#from django.contrib.auth.decorators import user_passes_test
+from datetime import date, timedelta, datetime
+from django.core.files.base import ContentFile
+import base64
+import json
+# Create your views here.
 
-from .forms import CongressForm, PresentationForm, SessionForm
 from .models import *
-
-# * Suppression d'une salle
-def deleteRoom(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        id_salle = data.get("id", "")
-        print("id_salle : ", id_salle)
-        # Faites ici quelque chose avec le texte mis à jour, comme l'enregistrer en base de données
-        Room.objects.filter(id=id_salle).delete()
-        return JsonResponse({"success": True})
-    else:
-        return JsonResponse({"success": False})
-
-# * Modification du titre d'une salle
-def updateText(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        id_salle = data.get("id", "")
-        updated_text = data.get("text", "")
-        if updated_text == "":
-            updated_text = "Salle"
-        # Faites ici quelque chose avec le texte mis à jour, comme l'enregistrer en base de données
-        print("id_salle : ", id_salle, " updated_text : ", updated_text)
-        Room.objects.filter(id=id_salle).update(name=updated_text)
-        return JsonResponse({"success": True})
-    else:
-        return JsonResponse({"success": False})
+from .forms import CongressForm, SessionForm, PresentationForm, IntervenantForm
 
 def addOneRoom(new):
     # * Si il y a plusieurs congres,
@@ -49,10 +26,7 @@ def addOneRoom(new):
         new = None
     if new :
         rooms = Room.objects.all()
-        # On va chercher le dernier nom de la salle et on vérifie qu'il s'agit du type "Salle NOMBRE"
-        last_room = Room.objects.latest('number')
-        print("CoNFORTAAAA" ,last_room.number)
-        Room.objects.create(congress= new , number=str(last_room.number+1), name="Salle "+str(last_room.number+1))
+        Room.objects.create(congress= new , number=str(rooms.count()+1), name="Salle "+str(rooms.count()+1))
         status = "salle ajoutée"
     else :
         #retournement d'erreur
@@ -60,6 +34,7 @@ def addOneRoom(new):
         status = "error de creation de la salle => pas de congres en cours"
 
     return JsonResponse({'status': status})
+
 
 def addRooms(new, nb):
     i=1
@@ -107,7 +82,7 @@ def addcongres(request):
         else : messages.error(request,'Formulaire invalide : '+add_form.errors)
        
     form = CongressForm()
-    return render(request, "Planning/congres.html", {"add_form":form}) 
+    return render(request, "Planning/congres.html", {"add_form":form})
 
 # mise a jour de la presentation en cours dans le champ dedié de la room pour affichage dans le live
 #@user_passes_test(lambda u: u.is_superuser)
@@ -124,6 +99,43 @@ def show_plan(request):
     congres = Congress.objects.get()
     rooms = Room.objects.filter(congress__pk=congres.pk)
     return render(request, 'Planning/show.html', {'rooms': rooms})
+
+def show_pupitre(request):
+    congres = Congress.objects.get()
+    rooms = Room.objects.filter(congress__pk=congres.pk)
+    days = Day.objects.filter(congress__pk=congres.pk)
+    pform = PresentationForm()
+    sform = SessionForm()
+    return render(request, "Planning/pupitre.html", {'rooms': rooms,'days': days,"sess_form":sform, "pres_form":pform}) 
+
+def show_intervenant(request):
+    # récupération de tous les intervenants existants
+    intervenants = Intervenant.objects.all()
+
+    # vérification si la méthode de la requête est POST
+    if request.method == 'POST':
+        # création d'un formulaire à partir de la requête POST
+        form = IntervenantForm(request.POST)
+
+        # vérification si le formulaire est valide
+        if form.is_valid():
+            # sauvegarde de l'intervenant créé
+            form.save()
+
+            # redirection vers la page affichant tous les intervenants
+            return redirect('show_intervenant')
+    else:
+        # création d'un formulaire 
+        form = IntervenantForm()
+
+    # contexte à transmettre au template
+    context = {
+        'intervenants': intervenants,
+        'form': form,
+    }
+
+    # rendu du template
+    return render(request, 'Planning/intervenant.html', context)
 
 """
 #@login_required
@@ -142,7 +154,6 @@ def ajax_load_planning(request, pk, date):
         "session_title": presentation.session.title,
         "time_begin": presentation.session.time_start,
         "time_end": presentation.session.time_end,
-
     } for presentation in presentations ]
     
     return JsonResponse(presentations_list, safe=False)
@@ -216,6 +227,8 @@ def ajax_load_rooms(request):
     return JsonResponse(rooms_list, safe=False)
 
 
+
+
 #@login_required
 def ajax_add_session(request, pk):
     response_data = {}
@@ -281,11 +294,14 @@ def ajax_add_pres(request, pk):
     if request.method == 'POST':
         jsonbody = json.loads(request.body)
 
+        print(request.body)
+
         response_data['title'] = jsonbody['title']
         response_data['time2'] = jsonbody['duration']
         response_data['author'] = jsonbody['author']
         response_data['author1'] = jsonbody['author1']
         response_data['author2'] = jsonbody['author2']
+
 
         # ! REGLER LE BUG DE MODIFICATION DES INFORMATIONS DE PRESENTATION
 
@@ -302,10 +318,11 @@ def ajax_add_pres(request, pk):
             
             # new.author=jsonbody['author']
             new.duration=jsonbody['duration']
+            # new.fichier = jsonbody['fichier']
             InterPresent.objects.filter(id_presentation=new).delete()
             new.save()
         else :
-        
+            print(jsonbody["fichier"])
             new =  Presentation.objects.create( session_id = pk,
                                                 title = jsonbody['title'],
                                                 # author= jsonbody['author'],
@@ -382,5 +399,77 @@ def ajax_del_pres(request, pk):
         else : 
             Presentation.objects.filter(id=pk).delete()
     
-    return JsonResponse({}, safe=False)    
+    return JsonResponse({}, safe=False)
+
+def open_ppt(host, ppt_file):
+    host = host
+    port = 5000
+    message = f"open_ppt@{ppt_file}".encode()
+    # create socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        # connect to server
+        sock.connect((host, port))
+        # send string to server
+        sock.sendall(message)
+        # get server response
+        response = sock.recv(1024)
+        # decode the response and return it
+        return response.decode()
+
+
+
+def ouvrir_presentation(request):
+
+    data = json.loads(request.body)
+    id_pres = data.get('id', '')
+    print(id_pres)
+
+    presentation = Presentation.objects.get(id=id_pres)
+    print(presentation)
+    fichier_pptx = presentation.fichier_pptx
+    print(fichier_pptx.path)
+
+    open_ppt("192.168.0.162", fichier_pptx.path)
     
+
+    return JsonResponse({"success": True})
+
+
+
+def show_upload(request):
+    intervenant_all = Intervenant.objects.all()
+    print("ok")
+    return render(request, 'Planning/upload.html', {'intervenant_all': intervenant_all})
+
+def intervenant_select(request):
+
+    data = json.loads(request.body)
+    id = data.get('id', '')
+
+    print(id)
+    presentations = Presentation.objects.filter(interpresent__id_intervenant=id)
+    presentation_list = []
+
+    for presentation in presentations:
+        presentation_list.append({
+            'id': presentation.id,
+            'title': presentation.title,
+            'duration': presentation.duration,
+            'fichier_pptx': presentation.fichier_pptx.url if presentation.fichier_pptx else None
+        })
+
+    # print(presentation_list)
+    
+    return JsonResponse({"presentations": presentation_list})
+
+def upload_file(request):
+    file = request.FILES.get("file")
+
+    # fss = FileSystemStorage()
+    # filename = fss.save(file.name, file)
+    # url = fss.url(filename)
+    print(file)
+    data = ContentFile(base64.b64decode(file), name=file.name) 
+    Presentation.objects.create(doc=data)
+    print(data)
+    return JsonResponse({"link": data})

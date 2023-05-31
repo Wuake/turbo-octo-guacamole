@@ -1,0 +1,226 @@
+{% extends 'Planning/base.html' %}
+{% load static %}
+{% block title%}Upload{% endblock %}
+
+{% block body %}
+
+<div class="container">
+    <div class="row">
+        <hr>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body" data-mdb-perfect-scrollbar="true"
+                    style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+
+                    <div class="list-group planning-area">
+                        <!-- planning area by ajax -->
+
+
+                        {% for intervenant in intervenant_all %}
+
+                        <li id="{{ intervenant.id }}"
+                            class="list-group-item personne align-items-start list-group-item-action">
+                            <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
+                            <div class="d-flex w-100 justify-content-between">
+                                <img src="{{ intervenant.logo.url }}"
+                                    style="width: 75px;height: 75px;border-radius: 30rem;">
+                                <h5 class="mb-1" style="align-self: center;"> {{ intervenant }} </h5>
+                                <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
+                                    <a href="#"
+                                        onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
+                                        class=" bi-pencil-fill text-secondary"></a>
+                                </span>-->
+                            </div>
+
+                        </li>
+
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div id="presta_container" class="card-body" data-mdb-perfect-scrollbar="true"
+                    style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+
+                    <div class="list-group planning-area">
+                        <!-- planning area by ajax -->
+                        {{ presentations }}
+
+                        {% for presentation in presentations %}
+
+                        <li id="{{ presentation.id }}" class="list-group-item align-items-start list-group-item-action">
+                            <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1" style="align-self: center;"> {{ presentation.title }} </h5>
+                                <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
+                                    <a href="#"
+                                        onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
+                                        class=" bi-pencil-fill text-secondary"></a>
+                                </span>-->
+                            </div>
+
+                        </li>
+
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <input type="hidden" id="js_data" data-url="" data-csrf="{{csrf_token}}" />
+</div>
+<div id="overlay">
+    <section id="page_upload" >
+        <div class="container" >
+            <div id="divrow" class="row"  > 
+                <div class="col">
+                <div class="mb-3 mt-3">
+                    <h2 class="mb-3" style="font-weight: 300">Importer une présentation (.pptx)</h2>
+        
+                        <form enctype="multipart/form-data" method="POST" action="" style="text-align: center;">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                                <input type="file" value="Custom Button Name" class="form-control" id="fileupload" placeholder="Select file">
+                            
+                            </div>    
+                        </form>
+        
+                        <button type="button" value="Upload" id="upload_btn" class="btn btn-primary ">Upload</button>
+                            <button class="btn btn-primary d-none" id="loading_btn" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Uploading...
+                            </button>
+                
+                            <button type="button" id="cancel_btn" class="btn btn-secondary d-none">Cancel upload</button>
+        
+                        <div id="progress_wrapper">
+                        </div>
+                        <div id="alert_wrapper"></div>
+                    </div> 
+                </div>
+            </div> 
+        </div>
+    </section>
+</div>
+
+<script type="text/javascript" defer>
+    let csrf_token = $("#js_data").attr("data-csrf");
+    var liste_personnes = document.querySelectorAll('.personne')
+    
+    // permet de fermer la popup en cliquant en dehors de la popup
+    document.getElementById("overlay").addEventListener("click", function () {
+        document.getElementById("overlay").style.display = "none";
+    });
+    
+    function popup() {
+        document.getElementById("overlay").style.display = "block";
+    }
+
+    console.log(liste_personnes[0])
+    for (var i = 0; i < liste_personnes.length; i++) {
+        liste_personnes[i].addEventListener("click", function () {
+            console.log(this.id)
+
+            fetch("{% url 'planning:upload_intervenant' %}", {
+                    method: "POST",
+                    credentials: 'same-origin',
+                    headers: {
+                        "X-CSRFToken": csrf_token,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        id: this.id,
+                    }),
+                }).then(response => response.json())
+                .then(data => {
+                    // on vide le contenu hmtl pour éviter les doublons
+                    document.getElementById("presta_container").innerHTML = "";
+                    // console.log(data.presentations);
+                    data.presentations.forEach(presta => {
+                        // console.log(presta)
+                        construct_presta(presta)
+                    });
+                    // for (i = 0; i <= data.presentations.length; i++){
+                    //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
+                    //     construct_presta()
+                    // }
+                })
+                .catch(error => console.error(error));
+
+        })
+    }
+    // function uploadFile() {
+    //     var data = new FormData();
+    //     data.append("file", $("input[id^='file']")[0].files[0]);
+    //     data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+    //     $.ajax({
+    //         method: "POST",
+    //         url: "{% url 'planning:upload' %}",
+    //         processData: false,
+    //         contentType: false,
+    //         mimeType: "multipart/form-data",
+    //         data: data,
+    //         success: function(res) {
+    //             console.log(res)
+    //         }
+    //     })
+    // }
+
+
+    function construct_presta(presentation) {
+        let div = document.createElement("div");
+        div.innerHTML = `
+            <li id="${presentation.id}" class="list-group-item align-items-start list-group-item-action" onclick="">                
+                <div id="list_presentation_block1" class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1"> ${presentation.title}</h5>
+                    <span class=" float-end">
+                        <p id="check_mark" hidden>✅</p>
+                        <p id="cross_mark">❌</p>
+                    </span> 
+                </div>
+
+
+
+                <div id="list_presentation_block2" class="d-flex w-100 justify-content-between">
+                    <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } min</h6>
+                    <button type="button" class="btn btn-outline-secondary" onclick="popup()">Fichier</button>
+                </div>
+
+
+
+            </li>
+            <br/>
+            `
+        document.getElementById("presta_container").appendChild(div);
+        div.scrollIntoView()
+
+        //affichage de la pop-up pour l'upload du fichier
+
+
+        // dynamic_display()
+    }
+    // TO DO : Fonction qui permet l'affichage dynamique des emoji (check ou croix)
+    // function dynamic_display(){
+    //     let check_mark = document.getElementById("check_mark")
+    //     let cross_mark = document.getElementById("cross_mark")
+    //     let list_input_pptx = document.getElementsByTagName("#input_pptx") 
+    //     // Evenement change lancé lors de l'upload d'un fichier
+    //     // input_pptx.addEventListener("change", dynamic_display)
+
+    //     if (input_pptx.value != ""){
+    //         check_mark.hidden = false
+    //         cross_mark.hidden = true
+    //     }
+    //     else{
+    //         check_mark.hidden = true
+    //         cross_mark.hidden = false
+    //     }
+    // }
+</script>
+<script src="{% static 'js/upload.js' %}" defer></script>
+
+{% endblock %}

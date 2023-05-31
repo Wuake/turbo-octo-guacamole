@@ -6,6 +6,11 @@ app_name='planning'
 urlpatterns = [
     path('create', views.create, name='create'),
     path('show', views.show_plan, name='show'),
+    path('intervenant', views.show_intervenant, name='intervenant'),
+    path('pupitre', views.show_pupitre, name='pupitre'),
+    path('upload', views.show_upload, name='upload'),
+    path('upload_intervenant', views.intervenant_select, name='upload_intervenant'),
+    path('open_pres', views.ouvrir_presentation, name='open_pres'),
     path('congres', views.addcongres, name='congres'),
     path("pajax/<int:pk>/<slug:date>", views.ajax_load_planning, name="planning-ajax"),
     path("sajax/<int:pk>/", views.ajax_add_session, name="session-ajax"),
@@ -14,7 +19,4 @@ urlpatterns = [
     #ajout d'une salle
     path("salle-ajax/", views.addOneRoom, name="salle-ajax"),
     path("load-ajax/", views.ajax_load_rooms, name="load-ajax"),
-    # modification d'une salle
-    path("salle-modif-ajax/", views.updateText, name="salle-modif-ajax"),
-    path("salle-del-ajax/", views.deleteRoom, name="salle-del-ajax"),
 ]

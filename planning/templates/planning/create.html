@@ -6,14 +6,12 @@
 <div class="row">
   <div class="col-md-12">
     <div class="list-group list-group-horizontal">
-      <button id="del_room" class="bi-trash text-warning"></button>
       <div class="list-group list-group-horizontal" id="rooms">
         {% for room in rooms %}
-        <a contenteditable="false" href="javascript:setRoomLive('{{room.number}}', '{{room.id}}', '{{ rooms|length }}', '{{room.moderator.id}}')"
-          class="editable-text list-group-item list-group-item-action text-center rounded-0"
-          style=" height: 34px; padding: 2px 7px;" id="room_id{{ room.id }}">
-          {{room.name}}
-        </a>
+        <a href="javascript:setRoomLive('{{room.number}}', '{{room.id}}', '{{ rooms|length }}', '{{room.moderator.id}}')"
+          class="list-group-item list-group-item-action text-center rounded-0"
+          style=" border-bottom: 2px solid #1ce; height: 34px; padding: 2px 7px;" id="room_id{{ forloop.counter }}">
+          {{room.number}}.{{room.name}}</a>
         {% empty %}
         <p> Désolé, pas de salles disponibles !</p>
         {% endfor %}
@@ -75,82 +73,10 @@
   let room_sel = 0;
   let sess_sel = 0;
   let on_edit = false;
-  let btn_del = document.getElementById("del_room");
-
-  // Permet la suppression d'une salle
-  btn_del.addEventListener('click', function () {
-    if (room_sel != 0) {
-      fetch("{% url 'planning:salle-del-ajax' %}", {
-        method: "POST",
-        credentials: 'same-origin',
-        headers: {
-          "X-CSRFToken": csrf_token,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: room_sel,
-        }),
-      }).then(function (response) {
-        console.log("La salle a été supprimée !");
-        // APPELLER LA FONCTION POUR RECHARGER LES SALLES ICI
-        load_rooms();
-      }).catch(function (error) {
-        console.log("Une erreur s'est produite : " + error);
-        console.log("c'est la merde (fonction delete-room)")
-      });
-    }
-  });
-
-  // Modification d'un nom de salle quand on double-clique dessus
-  function doubleClickRoom() {
-    let roomId = this.getAttribute('data-room-id');
-    console.log('Salle', roomId, 'double-cliquée !');
-    this.setAttribute('contenteditable', 'true');
-  }
-
-  // Récupérez toutes les salles de la page
-  const rooms = document.querySelectorAll('.list-group-item');
-
-  // Bouclez sur chaque salle pour ajouter un événement double-clic
-  rooms.forEach(room => {
-    const roomId = room.getAttribute('id').replace('room_id', '');
-    room.setAttribute('data-room-id', roomId);
-    room.addEventListener('dblclick', doubleClickRoom);
-  
-  });
-
-  // Zone de texte éditable pour la modification des noms des salles
-  $(".editable-text").on("blur", function () {
-    var id = $(this).attr("data-room-id");
-    var updatedText = $(this).html();
-    var editableUpdated = $(this).siblings(".editable-text-updated");
-    console.log(id, updatedText)
-    editableUpdated.html(updatedText);
-    this.setAttribute('contenteditable', 'false');
-    console.log("ROOM SEL =>", room_sel)
- 
-    // envoie le text updaté à la base de données
-    fetch("{% url 'planning:salle-modif-ajax' %}", {
-      method: "POST", 
-      credentials: 'same-origin',
-      headers: {
-        "X-CSRFToken": csrf_token,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: id,
-        text: updatedText,
-      }),
-    }).then(function (response) {
-      console.log("Le texte a été enregistré !");
-    }).catch(function (error) {
-      console.log("Une erreur s'est produite : " + error);
-      console.log("c'est la merde (fonction update-text)")
-    });
-    // APPELLER LA FONCTION POUR RECHARGER LES SALLES ICI
-  });
 
   // Ajoute une salle quand on clique sur le bouton + ( id="add_room" )
+  // ! ne se met pas à jour apres l'insertion d'une salle
+  // 1 clique fonctionne, puis plus rien
   $('#add_room').click(function () {
     //ajouter une salle
     fetch("{% url 'planning:salle-ajax' %}", {
@@ -266,23 +192,13 @@
   // selection de la salle
   function setRoomLive(room_nb, room_id, nbTotal, moderator) {
     
-    // for (let i = 1; i <= nbTotal; i++) {
-    //   document.getElementById('room_id' + i).style.color = '#000000';
-    //   document.getElementById('room_id' + i).style.borderBottom = document.getElementById('room_id' + i).style
-    //   .borderTop;
-    // }
-    // document.getElementById('room_id' + room_id).style.borderBottom = "2px solid #1ce";
+    for (let i = 1; i <= nbTotal; i++) {
+      document.getElementById('room_id' + i).style.color = '#000000';
+      document.getElementById('room_id' + i).style.borderBottom = document.getElementById('room_id' + i).style
+      .borderTop;
+    }
+    document.getElementById('room_id' + room_nb).style.borderBottom = "2px solid #1ce";
 
-    let room_list = document.getElementsByClassName("editable-text");
-    console.log("LES ELEMENTS DE LA LISTE DES SALLES => ", room_list) 
-
-    for (let i = 0; i < room_list.length; i++) {
-      room_list[i].style.color = '#000000';
-      room_list[i].style.borderBottom = room_list[i].style.borderTop;
-    } 
-    // On met le petit trait bleu en dessous du nom de la salle sélectionnée
-    document.getElementById('room_id' + room_id).style.borderBottom = "2px solid #1ce";
-    
     load_planning(room_id);
     room_sel = room_id;
   }
@@ -317,6 +233,11 @@
         construct_rooms(message);
         console.log(message)
         location.reload()
+        // btn = document.createElement("button");
+        // btn.innerHTML = "+"
+        // btn.setAttribute("id", "add_room");
+        // btn.setAttribute("class", "btn")
+        // div.appendChild(btn)
       })
   }
 
@@ -341,12 +262,13 @@
         }
       })
   }
+  
   //On va chercher la liste des jours et on les affiche un par un
   function construct_rooms(room) {
     
     let div = document.getElementById("rooms");
     let a = document.createElement("a");
-    a.href = "javascript:setRoomLive('" + room.number + "." + room.id + "')";
+    a.href = "javascript:setRoomLive('" + room.number + "." + room.id + "')"; // à adapter en fonction de tes besoins
     a.className = "list-group-item list-group-item-action text-center rounded-0";
     a.style = "border-bottom: 2px solid #1ce; height: 34px; padding: 2px 7px;";
     a.innerHTML = room.number + "." + room.name;
@@ -384,7 +306,7 @@
           <div class="d-flex w-100 justify-content-between">
             <h5 class="mb-1">  ${ pres.author } </h5>
             <span class=" float-end">  <small> ${ pres.duration } min &nbsp;&nbsp; </small>
-              <a href="#"  onclick="editPres( '${ pres.id }',' ${ pres.title }',' ${ pres.duration }',' ${ pres.author_id }')" class=" bi-pencil-fill text-secondary"></a> 
+              <a href="#"  onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')" class=" bi-pencil-fill text-secondary"></a> 
             </span> 
           </div>   
           <div class="d-flex w-100 justify-content-between">
@@ -394,7 +316,7 @@
             </span> 
           </div>        
           
-        </i>
+        </li>
         `
     //div.setAttribute("id", "id_pres"+ pres.id ); 
     planning_container.appendChild(div);
@@ -435,8 +357,7 @@
     old_sel = tmp;
 
     on_edit = false;
-
-   }
+  }
   //edit presentation 
   function editPres( id, title, duration, author, author1, author2 )
     {

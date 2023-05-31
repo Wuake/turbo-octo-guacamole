@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+APPEND_SLASH = False
 
 # Application definition
 
@@ -39,12 +40,14 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     
-     'django_bootstrap5',
+    'django_bootstrap5',
     'django_extensions',
     'crispy_forms',
     "crispy_bootstrap5",
     
-    'planning'
+    'planning',
+    'upload',
+
 ]
 
 MIDDLEWARE = [
