@@ -34,4 +34,11 @@ class IntervenantForm(forms.ModelForm):
     class Meta:
         model = Intervenant
         fields = '__all__'
+
+
+class EditIntervenantForm(forms.ModelForm):
+    class Meta:
+        model = Intervenant
+        fields = ['nom', 'prenom', 'logo']
+
    

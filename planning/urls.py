@@ -7,6 +7,7 @@ urlpatterns = [
     path('create', views.create, name='create'),
     path('show', views.show_plan, name='show'),
     path('intervenant', views.show_intervenant, name='intervenant'),
+    path('delete_intervenant/<int:intervenant_id>/', views.delete_intervenant, name='delete_intervenant'),
     path('pupitre', views.show_pupitre, name='pupitre'),
     path('upload', views.show_upload, name='upload'),
     path('upload_intervenant', views.intervenant_select, name='upload_intervenant'),

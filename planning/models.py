@@ -80,8 +80,9 @@ class Intervenant(models.Model):
 
     def to_json(self):
         return {
-            'nom': self.nom,
-            'prenom': self.prenom,
+            'id': self.id,
+            'nom_complet': f'{self.nom} {self.prenom}',
+            'logo_url': self.logo.url
         }
           
     

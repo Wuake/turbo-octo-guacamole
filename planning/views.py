@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
+
 import socket
 from django.db.models import Q
 from django.core.files.storage import FileSystemStorage
@@ -14,7 +15,7 @@ import json
 # Create your views here.
 
 from .models import *
-from .forms import CongressForm, SessionForm, PresentationForm, IntervenantForm
+from .forms import CongressForm, SessionForm, PresentationForm, IntervenantForm, EditIntervenantForm
 
 def addOneRoom(new):
     # * Si il y a plusieurs congres,
@@ -109,33 +110,40 @@ def show_pupitre(request):
     return render(request, "Planning/pupitre.html", {'rooms': rooms,'days': days,"sess_form":sform, "pres_form":pform}) 
 
 def show_intervenant(request):
-    # récupération de tous les intervenants existants
-    intervenants = Intervenant.objects.all()
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        if 'id' in request.POST:  # Modification de l'intervenant existant
+            intervenant = get_object_or_404(Intervenant, id=request.POST['id'])
+            form = EditIntervenantForm(request.POST, request.FILES, instance=intervenant)
+        else:  # Création d'un nouvel intervenant
+            form = IntervenantForm(request.POST, request.FILES)
 
-    # vérification si la méthode de la requête est POST
-    if request.method == 'POST':
-        # création d'un formulaire à partir de la requête POST
-        form = IntervenantForm(request.POST)
-
-        # vérification si le formulaire est valide
         if form.is_valid():
-            # sauvegarde de l'intervenant créé
-            form.save()
-
-            # redirection vers la page affichant tous les intervenants
-            return redirect('show_intervenant')
+            intervenant = form.save()
+            response = {'success': True, 'intervenant': intervenant.to_json()}
+        else:
+            response = {'success': False, 'errors': form.errors}
+        return JsonResponse(response)
     else:
-        # création d'un formulaire vide
-        form = IntervenantForm()
+        intervenants = Intervenant.objects.all()
+        Intervenant_form = IntervenantForm()
+        EditIntervenant_form = EditIntervenantForm()
 
-    # contexte à transmettre au template
-    context = {
-        'intervenants': intervenants,
-        'form': form,
-    }
+        context = {
+            'intervenants': intervenants,
+            'Intervenant_form': Intervenant_form,
+            'EditIntervenant_form': EditIntervenant_form,
+        }
 
-    # rendu du template
-    return render(request, 'Planning/intervenant.html', context)
+        return render(request, 'Planning/intervenant.html', context)    
+
+def delete_intervenant(request, intervenant_id):
+    try:
+        intervenant = Intervenant.objects.get(id=intervenant_id)
+        intervenant.delete()
+        return JsonResponse({'success': True})
+    except Intervenant.DoesNotExist:
+        return JsonResponse({'success': False, 'errors': 'Intervenant does not exist.'})
+
 
 """
 #@login_required
@@ -211,6 +219,7 @@ def ajax_load_planning(request, pk, date):
 
     return JsonResponse(presentations_list, safe=False)
 
+
 # * charge les salles d'un congres
 # * prend en param l'id du congres
 def ajax_load_rooms(request):
@@ -231,6 +240,62 @@ def ajax_load_rooms(request):
 
 #@login_required
 def ajax_add_session(request, pk):
+    response_data = {}
+    today = date.today()
+    if request.method == 'POST':
+        jsonbody = json.loads(request.body)
+        print("_________________________________________________________", jsonbody['id'],  jsonbody['title'])
+        try:
+            new = Session.objects.get(id=int(jsonbody['id']))
+        except Session.DoesNotExist:
+            new = None
+
+        if new is None:
+            start_time = datetime.strptime(jsonbody['time1'], '%H:%M').time()
+            end_time = datetime.strptime(jsonbody['time2'], '%H:%M').time()
+            date_id = jsonbody['date']
+            existing_sessions = Session.objects.filter(
+                Q(room_id=pk) & Q(date_id=date_id) &
+                (Q(time_start__lt=end_time) & Q(time_end__gt=start_time))
+            )
+            if existing_sessions.exists():
+                response_data['error'] = 'Une session existe déjà à ce moment-là'
+            else:
+                sess = Session.objects.create(
+                    room_id=pk,
+                    date_id=date_id,
+                    title=jsonbody['title'],
+                    time_start=start_time,
+                    time_end=end_time
+                )
+                if sess:
+                    Presentation.objects.create(
+                        session_id=sess.id,
+                        title='Présentation',
+                        duration=30,
+                    )
+                response_data['success'] = 'Session créée avec succès'
+        else:
+            start_time = datetime.strptime(jsonbody['time1'], '%H:%M').time()
+            end_time = datetime.strptime(jsonbody['time2'], '%H:%M').time()
+            date_id = jsonbody['date']
+            existing_sessions = Session.objects.filter(
+                Q(room_id=pk) & Q(date_id=date_id) & ~Q(id=new.id) &
+                (Q(time_start__lt=end_time) & Q(time_end__gt=start_time))
+            )
+            if existing_sessions.exists():
+                response_data['error'] = 'Une session existe déjà à ce moment-là'
+            else:
+                new.title = jsonbody['title']
+                new.time_start = start_time
+                new.time_end = end_time
+                new.save()
+                response_data['success'] = 'Session mise à jour avec succès'
+
+    presentations_list = {}
+    return JsonResponse(response_data, safe=False)
+
+def ajax_add_intervenant(request, pk):
     response_data = {}
     today = date.today()
     if request.method == 'POST':

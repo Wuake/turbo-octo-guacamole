@@ -2,10 +2,10 @@
 {% load static %}
 {% block title%}Webeeconf{% endblock %}
 
-{% block body %} 
-
+{% block body %}
+{% load crispy_forms_tags %}
 <div class="container">
-    <div class="row"> 
+    <div class="row">
         <hr>
         <div class="col-md-6">
             <div class="card">
@@ -15,93 +15,220 @@
                     <div class="list-group planning-area">
                         <!-- planning area by ajax -->
 
-
                         {% for intervenant in intervenants %}
-
                         <li id="{{ intervenant.id }}"
                             class="list-group-item personne align-items-start list-group-item-action">
-                            <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
                             <div class="d-flex w-100 justify-content-between">
                                 <img src="{{ intervenant.logo.url }}"
                                     style="width: 75px;height: 75px;border-radius: 30rem;">
                                 <h5 class="mb-1" style="align-self: center;"> {{ intervenant }} </h5>
-                                <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
-                                    <a href="#"
-                                        onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
-                                        class=" bi-pencil-fill text-secondary"></a>
-                                </span>-->
+                                <div>
+                                    <button class="btn btn-sm btn-primary edit-intervenant" data-id="{{ intervenant.id }}">Modifier</button>
+                                    <button class="btn btn-sm btn-danger delete-intervenant" data-id="{{ intervenant.id }}">Supprimer</button>
+                                <div>
                             </div>
-
                         </li>
-
                         {% endfor %}
                     </div>
-
                 </div>
             </div>
         </div>
 
         <div class="col-md-6">
             <br>
-            <div id="form_sess">
-              {# {{ sess_form|crispy }} #}
-              <hr>
-              <button class="btn btn-info" id="sess_submit">Valider Session</button>
+            <div id="intervenantFormContainer">
+                <form id="intervenantForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ Intervenant_form|crispy }}
+                    <hr>
+                    <button type="submit" class="btn btn-info" id="sess_submit">Valider Session</button>
+                </form>
             </div>
-            <div id="form_pres" display='none'>
-              {# {{ pres_form|crispy }} #}
-      
-              <button type="button" id="add_field" class="btn btn-secondary">Intervenant supplémentaire</button>
-              <hr>
-              <button class="btn btn-primary" id="pres_submit">Valider Présentation</button>
-            </div>
-          </div>
 
-        
+            <div id="editFormContainer" style="display: none;">
+                <form id="editIntervenantForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="editIntervenantId" name="id">
+                    {{ EditIntervenant_form|crispy }}
+                    <hr>
+                    <button type="submit" class="btn btn-info" id="edit_submit">Valider Modification</button>
+                    <button type="button" class="btn btn-secondary" id="cancel_edit">Annuler</button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
 
-
 <script type="text/javascript" defer>
-    let csrf_token = $("#js_data").attr("data-csrf");
-    var liste_personnes = document.querySelectorAll('.personne')
+    $(document).ready(function () {
+        $('#intervenantForm').submit(function (e) {
+            e.preventDefault();
+            var form = $(this);
+            var url = form.attr('action');
+            var formData = new FormData(this);
 
-    console.log(liste_personnes[0])
-    for (var i = 0; i < liste_personnes.length; i++) {
-        liste_personnes[i].addEventListener("click", function () {
-            console.log(this.id)
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.success) {
+                        console.log('Intervenant enregistré avec succès.');
 
-            fetch("{% url 'planning:upload_intervenant' %}", {
-                    method: "POST",
-                    credentials: 'same-origin',
-                    headers: {
-                        "X-CSRFToken": csrf_token,
-                        "Content-Type": "application/json",
+                        // Ajouter le nouvel intervenant à la liste
+                        var intervenantList = $('.planning-area');
+                         var newIntervenant = $('<li/>', {
+                            id: response.intervenant.id,
+                            class: 'list-group-item personne align-items-start list-group-item-action'
+                        });
+
+                        var content = $('<div/>', {
+                            class: 'd-flex w-100 justify-content-between'
+                        });
+
+                        var img = $('<img/>', {
+                            src: response.intervenant.logo_url,
+                            style: 'width: 75px;height: 75px;border-radius: 30rem;'
+                        });
+
+                        var name = $('<h5/>', {
+                            class: 'mb-1',
+                            style: 'align-self: center;',
+                            text: response.intervenant.nom_complet
+                        });
+
+                        var debutdiv = $('<div/>');
+
+                        var editButton = $('<button/>', {
+                            class: 'btn btn-sm btn-primary edit-intervenant',
+                            'data-id': response.intervenant.id,
+                            text: 'Modifier'
+                        });
+
+                        var deleteButton = $('<button/>', {
+                            class: 'btn btn-sm btn-danger delete-intervenant',
+                            'data-id': response.intervenant.id,
+                            text: 'Supprimer'
+                        });
+                        
+                        debutdiv.append(editButton, deleteButton)
+                        content.append(img, name, debutdiv);
+                        newIntervenant.append(content);
+                        intervenantList.append(newIntervenant);
+                    } else {
+                        console.log(response.errors);
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    console.log('Erreur lors de la soumission du formulaire : ' + thrownError);
+                }
+            });
+        });
+
+        // Gestion du formulaire de modification
+        $('.edit-intervenant').click(function() {
+            var intervenantId = $(this).data('id');
+            var intervenantItem = $('#' + intervenantId);
+            var intervenantName = intervenantItem.find('h5').text();
+            var intervenantLogo = intervenantItem.find('img').attr('src');
+
+            // Remplir le formulaire de modification
+            $('#editIntervenantId').val(intervenantId);
+            $('#id_nom').val(intervenantName);
+            $('#editIntervenantForm img').attr('src', intervenantLogo);
+
+            // Masquer le formulaire d'ajout et afficher le formulaire de modification
+            $('#intervenantFormContainer').hide();
+            $('#editFormContainer').show();
+        });
+
+        // Annuler la modification
+        $('#cancel_edit').click(function() {
+            // Réinitialiser le formulaire
+            $('#editIntervenantForm')[0].reset();
+            $('#editIntervenantForm img').attr('src', '');
+
+            // Afficher le formulaire d'ajout et masquer le formulaire de modification
+            $('#editFormContainer').hide();
+            $('#intervenantFormContainer').show();
+        });
+
+        // Soumettre la modification
+        $('#editIntervenantForm').submit(function (e) {
+            e.preventDefault();
+            var form = $(this);
+            var url = form.attr('action');
+            var formData = new FormData(this);
+
+            $.ajax({
+                type: 'POST',
+                url: url,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.success) {
+                        console.log('Intervenant modifié avec succès.');
+
+                        // Mettre à jour les informations de l'intervenant dans la liste
+                        var intervenantItem = $('#' + response.intervenant.id);
+                        intervenantItem.find('h5').text(response.intervenant.nom_complet);
+                        intervenantItem.find('img').attr('src', response.intervenant.logo_url);
+
+                        // Réinitialiser le formulaire
+                        $('#editIntervenantForm')[0].reset();
+                        $('#editIntervenantForm img').attr('src', '');
+
+                        // Afficher le formulaire d'ajout et masquer le formulaire de modification
+                        $('#editFormContainer').hide();
+                        $('#intervenantFormContainer').show();
+                    } else {
+                        console.log(response.errors);
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    console.log('Erreur lors de la soumission du formulaire : ' + thrownError);
+                }
+            });
+        });
+
+        // Supprimer un intervenant
+        $(document).on('click', '.delete-intervenant', function () {
+            var intervenantId = $(this).data('id');
+            var intervenantItem = $('#' + intervenantId);
+
+            // Confirmer la suppression de l'intervenant
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet intervenant ?')) {
+                urlinter = "{% url 'planning:delete_intervenant' 1234 %}".replace(/1234/,
+                    intervenantId);
+
+                $.ajax({
+                    type: 'POST',
+                    url: urlinter,
+                    data: {
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
                     },
-                    body: JSON.stringify({
-                        id: this.id,
-                    }),
-                }).then(response => response.json())
-                .then(data => {
-                    // on vide le contenu hmtl pour éviter les doublons
-                    document.getElementById("presta_container").innerHTML = "";
-                    // console.log(data.presentations);
-                    data.presentations.forEach(presta => {
-                        // console.log(presta)
-                        construct_presta(presta)
-                    });
-                    // for (i = 0; i <= data.presentations.length; i++){
-                    //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
-                    //     construct_presta()
-                    // }
-                })
-                .catch(error => console.error(error));
+                    success: function (response) {
+                        if (response.success) {
+                            console.log('Intervenant supprimé avec succès.');
 
-        })
-    }
-    
-
-
+                            // Supprimer l'intervenant de la liste
+                            intervenantItem.remove();
+                        } else {
+                            console.log(response.errors);
+                        }
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        console.log('Erreur lors de la suppression de l\'intervenant : ' +
+                            thrownError);
+                    }
+                });
+            }
+        });
+    });
 </script>
+
 
 {% endblock %}
