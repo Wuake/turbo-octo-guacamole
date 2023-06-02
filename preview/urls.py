@@ -30,6 +30,7 @@ urlpatterns = [
     path('', views.home, name="home"),
     path('plan/', show_plan, name="show_plan"),
     re_path(r'^planning/', include('planning.urls')),
+    re_path(r'^upload/', include('upload.urls')),
 
 
 # Admin Admin

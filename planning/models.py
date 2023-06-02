@@ -54,6 +54,11 @@ class Session(models.Model):
 
     def __str__(self):
         return self.title
+    
+class File(models.Model):
+    path = models.CharField(max_length=100)
+    name = models.CharField(max_length=50)
+    eof = models.BooleanField()
 
     
 
@@ -62,7 +67,7 @@ class Presentation(models.Model):
 	title = models.CharField(max_length=250, default=".............")
 	# author = models.CharField(max_length=100,  default="........d.....")
 	duration = models.SmallIntegerField(default=30)
-	fichier_pptx = models.FileField(upload_to='documents', validators=[FileExtensionValidator(['pptx'])], null=True, blank=True)
+	fichier_pptx = models.OneToOneField(File, on_delete=models.CASCADE, null=True, blank=True)
 
 
 

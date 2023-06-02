@@ -97,7 +97,7 @@ def create(request):
 
 
 def show_plan(request):
-    congress = Congress.objects.first()  # Récupérer le premier congrès (à ajuster selon vos besoins)
+    congress = Congress.objects.first()
     days = congress.confs_days.all()
     rooms = congress.event_conf_name.all()
     schedule = []
@@ -106,7 +106,11 @@ def show_plan(request):
         day_schedule = {'day': day, 'rooms': []}
         for room in rooms:
             sessions = Session.objects.filter(date=day, room=room).order_by('time_start')
-            room_data = {'room': room, 'sessions': sessions}
+            room_data = {'room': room, 'sessions': []}
+            for session in sessions:
+                presentations = Presentation.objects.filter(session=session)
+                session_data = {'session': session, 'presentations': presentations}
+                room_data['sessions'].append(session_data)
             day_schedule['rooms'].append(room_data)
         schedule.append(day_schedule)
 
@@ -504,9 +508,10 @@ def ouvrir_presentation(request):
     presentation = Presentation.objects.get(id=id_pres)
     print(presentation)
     fichier_pptx = presentation.fichier_pptx
-    print(fichier_pptx.path)
+    print("le fichier =>" + fichier_pptx.name)
+    print("Voici le lien vers le fichier =>" + fichier_pptx.path)
 
-    open_ppt("192.168.0.162", fichier_pptx.path)
+    open_ppt("127.0.0.1", fichier_pptx.path)
     
 
     return JsonResponse({"success": True})

@@ -2,30 +2,22 @@
 {% load static %}
 {% block title%}vod{% endblock %}
 
-{% block body %} 
+{% block body %}
 
 <div class="container">
-<div class="row"> 
-<hr>
-    <h1>{{ congress.name }}</h1>
-    <p>{{ congress.description }}</p>
+    <div class="row">
+        <hr>
 
-    {% for day_schedule in schedule %}
-        <h2>{{ day_schedule.day }}</h2>
-        {% for room_data in day_schedule.rooms %}
-            <h3>{{ room_data.room.name }}</h3>
-            <ul>
-                {% for session in room_data.sessions %}
-                    <li>
-                        <strong>{{ session.title }}</strong><br>
-                        Début : {{ session.time_start }} - Fin : {{ session.time_end }}<br>
-                        <a href="{% url 'presentation_list' session.id %}">Voir les présentations</a>
-                    </li>
-                {% endfor %}
-            </ul>
+        <!-- Pour choisir les dates -->
+        {% for day in schedule %}
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="radio_dates" id="radio_dates" value={{day.day}} onclick="setDate('{{day.day}}')">
+                <label class="form-check-label" for="inlineRadio1">{{day.day}}</label>
+            </div>
         {% endfor %}
-    {% endfor %}
-</div>
+
+        
+    </div>
 </div>
 
 {% endblock %}

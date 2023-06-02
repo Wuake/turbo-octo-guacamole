@@ -28,6 +28,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+APPEND_SLASH = False
 
 # Application definition
 
@@ -45,7 +46,7 @@ INSTALLED_APPS = [
     "crispy_bootstrap5",
     
     'planning',
-    'pandas'
+    'upload',
 ]
 
 MIDDLEWARE = [

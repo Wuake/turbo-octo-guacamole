@@ -50,7 +50,7 @@
                         {{ presentations }}
 
                         {% for presentation in presentations %}
-                        
+
                         <li id="{{ presentation.id }}" class="list-group-item align-items-start list-group-item-action">
                             <!-- onclick="select_prest(0,${ pres.session_id }, ${ pres.id } ) -->
                             <div class="d-flex w-100 justify-content-between">
@@ -73,10 +73,57 @@
     </div>
     <input type="hidden" id="js_data" data-url="" data-csrf="{{csrf_token}}" />
 </div>
+<div id="overlay">
+    <section id="page_upload" >
+        <div class="container" >
+            <div id="divrow" class="row"  > 
+                <div class="col">
+                <div class="mb-3 mt-3">
+                    <div style="display: flex; justify-content: space-between;">
+                        <h2 class="mb-3" style="font-weight: 300">Importer une présentation (.pptx)</h2>
+                        <span style="font-weight: 900; cursor: pointer;" onclick="popup_close()">&times;</span>
+                    </div>
+                        <form enctype="multipart/form-data" method="POST" action="" style="text-align: center;">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                                <input type="file" value="Custom Button Name" class="form-control" id="fileupload" placeholder="Select file">
+                            
+                            </div>    
+                        </form>
+        
+                        <button type="button" value="Upload" id="upload_btn" class="btn btn-primary ">Upload</button>
+                            <button class="btn btn-primary d-none" id="loading_btn" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Uploading...
+                            </button>
+                
+                            <button type="button" id="cancel_btn" class="btn btn-secondary d-none">Cancel upload</button>
+        
+                        <div id="progress_wrapper">
+                        </div>
+                        <div id="alert_wrapper"></div>
+                    </div> 
+                </div>
+            </div> 
+        </div>
+    </section>
+</div>
 
-<script type="text/javascript" defer>
+<script type="text/javascript">
     let csrf_token = $("#js_data").attr("data-csrf");
     var liste_personnes = document.querySelectorAll('.personne')
+    
+    // permet de fermer la popup en cliquant en dehors de la popup
+    document.getElementById("overlay").addEventListener("dblclick", function () {
+        document.getElementById("overlay").style.display = "none";
+    });
+    //gestion de la popup
+    function popup() {
+        document.getElementById("overlay").style.display = "block";
+    }
+    function popup_close() {
+        document.getElementById("overlay").style.display = "none";
+    }
 
     console.log(liste_personnes[0])
     for (var i = 0; i < liste_personnes.length; i++) {
@@ -111,29 +158,28 @@
 
         })
     }
-    function uploadFile() {
-        var data = new FormData();
-        data.append("file", $("input[id^='file']")[0].files[0]);
-        data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
-        $.ajax({
-            method: "POST",
-            url: "{% url 'planning:upload' %}",
-            processData: false,
-            contentType: false,
-            mimeType: "multipart/form-data",
-            data: data,
-            success: function(res) {
-                console.log(res)
-            }
-        })
-    }
-    
+    // function uploadFile() {
+    //     var data = new FormData();
+    //     data.append("file", $("input[id^='file']")[0].files[0]);
+    //     data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+    //     $.ajax({
+    //         method: "POST",
+    //         url: "{% url 'planning:upload' %}",
+    //         processData: false,
+    //         contentType: false,
+    //         mimeType: "multipart/form-data",
+    //         data: data,
+    //         success: function(res) {
+    //             console.log(res)
+    //         }
+    //     })
+    // }
+
 
     function construct_presta(presentation) {
         let div = document.createElement("div");
-        // CHANGER LE CONTENU
         div.innerHTML = `
-            <li id="${presentation.id}" class="list-group-item align-items-start list-group-item-action" onclick="">                
+            <li id="${presentation.id}" class="list-group-item align-items-start list-group-item-action">                
                 <div id="list_presentation_block1" class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"> ${presentation.title}</h5>
                     <span class=" float-end">
@@ -141,18 +187,25 @@
                         <p id="cross_mark">❌</p>
                     </span> 
                 </div>
+
+
+
                 <div id="list_presentation_block2" class="d-flex w-100 justify-content-between">
-                    <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } min</h6>
-                    <span class=" float-end"> 
-                        <input id="file" class="form-control mb-3" type="file">
-                        </span>
-                        <button class="btn btn-primary float-end" type="submit" onclick="uploadFile();">Submit Form</button>
+                    <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } ${presentation.id} min</h6>
+                    <button id="btn_fichier" type="button" class="btn btn-outline-secondary" onclick="popup()" value_presta="${presentation.id}">Fichier</button>
                 </div>
+
+
+
             </li>
             <br/>
             `
         document.getElementById("presta_container").appendChild(div);
         div.scrollIntoView()
+
+        //affichage de la pop-up pour l'upload du fichier
+
+
         // dynamic_display()
     }
     // TO DO : Fonction qui permet l'affichage dynamique des emoji (check ou croix)
@@ -172,8 +225,7 @@
     //         cross_mark.hidden = false
     //     }
     // }
-
-
 </script>
+<script src="{% static 'js/upload.js' %}" defer></script>
 
 {% endblock %}
