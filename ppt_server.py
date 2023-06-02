@@ -1,19 +1,6 @@
 import socket
 import os
-import os.path
-import win32com.client as win32
-import time
-import win32com.client
 
-#message box
-import ctypes
-
-import tkinter as tk
-from tkinter import messagebox
-
-
-#https://medium.com/@chasekidder/controlling-powerpoint-w-python-52f6f6bf3f2d
-#https://pypi.org/project/ppt-control/
 def server_program():
     # get the hostname
     host = '127.0.0.1'
@@ -41,32 +28,20 @@ def server_program():
                 msg = "server ok "
                 ppt = smsg.split("@")[1] # "C:\\wamp64\\www\\test.pptx"
                 conn.send(msg.encode())  # send data to the client
-                #os.system('start /max "" "POWERPNT.EXE" /c '+ppt)  # /s slide show C:\\Program Files (x86)\\Microsoft Office\\root\\Office16\\
-                #
-                print("ppt file ", ppt)
-                app = win32.gencache.EnsureDispatch("PowerPoint.Application")
-                
-                if os.path.isfile(ppt) :
-                    ppt =  str(ppt.replace("\\", "\\\\"))   
-                    presentation = app.Presentations.Open(FileName=ppt,  ReadOnly=0) # Untitled=0,WithWindow=1
-                    presentation.SlideShowSettings.ShowType = win32.constants.ppShowTypeSpeaker
-                    presentation.SlideShowSettings.Run()
-                    print("ppt file ______after run_____________ ", ppt)
-                    time.sleep(10)
-                   
-                else : print("File not exist : ", ppt)
-                    #ctypes.windll.user32.MessageBoxExW(0, text, title, 0x1000)
-                
-                #close ppt
-                presentation.Close()
-                app.Quit()
-                del app
-                os.system('taskkill /F /IM POWERPNT.EXE')
-                
+                os.system('start /max "" "POWERPNT.EXE" /S '+"C:/Users/sam/Desktop/Python/webeeconf-git/preview/"+ppt)  # /s slide show C:\\Program Files (x86)\\Microsoft Office\\root\\Office16\\
+                # os.system('start /max "" "chrome.EXE" /s '+ppt)
         conn.close()  # close the connection
-        print("client disconnected")
-        
-        #exit()                    
+        print("client disconnected")                      
+        # Créer un socket pour récupérer l'adresse IP locale
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        local_ip_address = s.getsockname()[0]
+        s.close()
 
+        # Récupérer l'adresse IP distante
+        remote_ip_address = socket.gethostbyname(socket.gethostname())
+
+        print("Votre adresse IP locale est :", local_ip_address)
+        print("Votre adresse IP distante est :", remote_ip_address)
 if __name__ == '__main__':
     server_program()
