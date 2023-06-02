@@ -7,7 +7,24 @@
 <div class="container">
 <div class="row"> 
 <hr>
-    shows
+    <h1>{{ congress.name }}</h1>
+    <p>{{ congress.description }}</p>
+
+    {% for day_schedule in schedule %}
+        <h2>{{ day_schedule.day }}</h2>
+        {% for room_data in day_schedule.rooms %}
+            <h3>{{ room_data.room.name }}</h3>
+            <ul>
+                {% for session in room_data.sessions %}
+                    <li>
+                        <strong>{{ session.title }}</strong><br>
+                        Début : {{ session.time_start }} - Fin : {{ session.time_end }}<br>
+                        <a href="{% url 'presentation_list' session.id %}">Voir les présentations</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endfor %}
+    {% endfor %}
 </div>
 </div>
 

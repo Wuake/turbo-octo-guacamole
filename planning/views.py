@@ -97,9 +97,21 @@ def create(request):
 
 
 def show_plan(request):
-    congres = Congress.objects.get()
-    rooms = Room.objects.filter(congress__pk=congres.pk)
-    return render(request, 'Planning/show.html', {'rooms': rooms})
+    congress = Congress.objects.first()  # Récupérer le premier congrès (à ajuster selon vos besoins)
+    days = congress.confs_days.all()
+    rooms = congress.event_conf_name.all()
+    schedule = []
+
+    for day in days:
+        day_schedule = {'day': day, 'rooms': []}
+        for room in rooms:
+            sessions = Session.objects.filter(date=day, room=room).order_by('time_start')
+            room_data = {'room': room, 'sessions': sessions}
+            day_schedule['rooms'].append(room_data)
+        schedule.append(day_schedule)
+
+    context = {'congress': congress, 'schedule': schedule}
+    return render(request, 'Planning/show.html', context)
 
 def show_pupitre(request):
     congres = Congress.objects.get()
@@ -387,7 +399,7 @@ def ajax_add_pres(request, pk):
             InterPresent.objects.filter(id_presentation=new).delete()
             new.save()
         else :
-            print(jsonbody["fichier"])
+            # print(jsonbody["fichier"])
             new =  Presentation.objects.create( session_id = pk,
                                                 title = jsonbody['title'],
                                                 # author= jsonbody['author'],
