@@ -20,4 +20,6 @@ urlpatterns = [
     #ajout d'une salle
     path("salle-ajax/", views.addOneRoom, name="salle-ajax"),
     path("load-ajax/", views.ajax_load_rooms, name="load-ajax"),
+    #gestion check_mark (présence du fichier)
+    path("check_mark/", views.check_mark, name="check_mark"),
 ]

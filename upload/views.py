@@ -38,6 +38,7 @@ def uploadfile(request):
                     presta.fichier_pptx = FileFolder
                     print("_________presta_fichier____________", presta.fichier_pptx)
                     presta.save()
+                    print(presta.fichier_pptx.path)
 
                 if int(end):
                     res = JsonResponse({'data':'Uploaded Successfully...','existingPath': fileName})

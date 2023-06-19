@@ -497,8 +497,6 @@ def open_ppt(host, ppt_file):
         # decode the response and return it
         return response.decode()
 
-
-
 def ouvrir_presentation(request):
 
     data = json.loads(request.body)
@@ -508,15 +506,20 @@ def ouvrir_presentation(request):
     presentation = Presentation.objects.get(id=id_pres)
     print(presentation)
     fichier_pptx = presentation.fichier_pptx
-    print("le fichier =>" + fichier_pptx.name)
-    print("Voici le lien vers le fichier =>" + fichier_pptx.path)
+    print("le fichier => " + fichier_pptx.name)
+    print("Voici le lien vers le fichier => " + fichier_pptx.path)
 
-    open_ppt("127.0.0.1", fichier_pptx.path)
-    
+    # open_ppt("127.0.0.1", fichier_pptx.path)
 
-    return JsonResponse({"success": True})
+    #try catch en python
+    try:
+        open_ppt("127.0.0.1", fichier_pptx.path)
+        res = True
+    except:
+        print("erreur de connexion au serveur python")
+        res = False
 
-
+    return JsonResponse({"success": res})
 
 def show_upload(request):
     intervenant_all = Intervenant.objects.all()
@@ -537,16 +540,13 @@ def intervenant_select(request):
             'id': presentation.id,
             'title': presentation.title,
             'duration': presentation.duration,
-            'fichier_pptx': presentation.fichier_pptx.url if presentation.fichier_pptx else None
+            'fichier_pptx': presentation.fichier_pptx.path if presentation.fichier_pptx else None
         })
-
-    # print(presentation_list)
     
     return JsonResponse({"presentations": presentation_list})
 
 def upload_file(request):
     file = request.FILES.get("file")
-
     # fss = FileSystemStorage()
     # filename = fss.save(file.name, file)
     # url = fss.url(filename)
@@ -555,3 +555,17 @@ def upload_file(request):
     Presentation.objects.create(doc=data)
     print(data)
     return JsonResponse({"link": data})
+
+def check_mark(request):
+    data = json.loads(request.body)
+    id = data.get('id', '')
+    presentation = Presentation.objects.get(id=id)
+    print("VOICI L'ID DE LA PRESENTATION",presentation.id)
+
+    if presentation.fichier_pptx is not None and presentation.fichier_pptx.path is not None:
+        res = True
+    else:
+        res = False
+        print("PAS DE PRESENTATION TROUVEE DANS LA BASE DE DONNEES")
+
+    return JsonResponse({"success": res})

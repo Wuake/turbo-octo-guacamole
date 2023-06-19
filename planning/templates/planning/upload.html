@@ -14,8 +14,6 @@
 
                     <div class="list-group planning-area">
                         <!-- planning area by ajax -->
-
-
                         {% for intervenant in intervenant_all %}
 
                         <li id="{{ intervenant.id }}"
@@ -31,12 +29,9 @@
                                         class=" bi-pencil-fill text-secondary"></a>
                                 </span>-->
                             </div>
-
                         </li>
-
                         {% endfor %}
                     </div>
-
                 </div>
             </div>
         </div>
@@ -87,10 +82,8 @@
                             {% csrf_token %}
                             <div class="form-group mb-3">
                                 <input type="file" value="Custom Button Name" class="form-control" id="fileupload" placeholder="Select file">
-                            
                             </div>    
                         </form>
-        
                         <button type="button" value="Upload" id="upload_btn" class="btn btn-primary ">Upload</button>
                             <button class="btn btn-primary d-none" id="loading_btn" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -125,10 +118,9 @@
         document.getElementById("overlay").style.display = "none";
     }
 
-    console.log(liste_personnes[0])
+    // gestion de l'affichage des présentations
     for (var i = 0; i < liste_personnes.length; i++) {
         liste_personnes[i].addEventListener("click", function () {
-            console.log(this.id)
 
             fetch("{% url 'planning:upload_intervenant' %}", {
                     method: "POST",
@@ -144,10 +136,9 @@
                 .then(data => {
                     // on vide le contenu hmtl pour éviter les doublons
                     document.getElementById("presta_container").innerHTML = "";
-                    // console.log(data.presentations);
                     data.presentations.forEach(presta => {
-                        // console.log(presta)
-                        construct_presta(presta)
+                        construct_presta(presta)//gère la construction des prestations
+                        dynamic_display(presta) //gère l'accusé de réception de présence de fichier (emoji)
                     });
                     // for (i = 0; i <= data.presentations.length; i++){
                     //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
@@ -155,58 +146,57 @@
                     // }
                 })
                 .catch(error => console.error(error));
-
         })
     }
-    // function uploadFile() {
-    //     var data = new FormData();
-    //     data.append("file", $("input[id^='file']")[0].files[0]);
-    //     data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
-    //     $.ajax({
-    //         method: "POST",
-    //         url: "{% url 'planning:upload' %}",
-    //         processData: false,
-    //         contentType: false,
-    //         mimeType: "multipart/form-data",
-    //         data: data,
-    //         success: function(res) {
-    //             console.log(res)
-    //         }
-    //     })
-    // }
-
 
     function construct_presta(presentation) {
+        console.log(presentation.id)
         let div = document.createElement("div");
         div.innerHTML = `
             <li id="${presentation.id}" class="list-group-item align-items-start list-group-item-action">                
                 <div id="list_presentation_block1" class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"> ${presentation.title}</h5>
                     <span class=" float-end">
-                        <p id="check_mark" hidden>✅</p>
-                        <p id="cross_mark">❌</p>
+                        <p id="check_mark_${ presentation.id }" hidden>✅</p>
+                        <p id="cross_mark_${ presentation.id }">❌</p>
                     </span> 
                 </div>
 
-
-
                 <div id="list_presentation_block2" class="d-flex w-100 justify-content-between">
-                    <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } ${presentation.id} min</h6>
+                    <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } ${presentation.id}min</h6>
                     <button id="btn_fichier" type="button" class="btn btn-outline-secondary" onclick="popup()" value_presta="${presentation.id}">Fichier</button>
                 </div>
-
-
-
             </li>
             <br/>
             `
         document.getElementById("presta_container").appendChild(div);
         div.scrollIntoView()
+    }
 
-        //affichage de la pop-up pour l'upload du fichier
-
-
-        // dynamic_display()
+    function dynamic_display(presentation){
+        //gestion des check mark pour la présence du fichier
+        fetch("{% url 'planning:check_mark' %}", {
+            method: "POST",
+            credentials: 'same-origin',
+            headers: {
+                "X-CSRFToken": csrf_token,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                id: presentation.id,
+            }),
+        })
+        //test si la réponse est ok
+        .then(response => response.json())
+        .then(data => {
+            if (data.success == true) {
+                document.getElementById(`check_mark_${ presentation.id }`).hidden = false
+                document.getElementById(`cross_mark_${ presentation.id }`).hidden = true
+            } else {
+                document.getElementById(`check_mark_${ presentation.id }`).hidden = true
+                document.getElementById(`cross_mark_${ presentation.id }`).hidden = false
+            }
+        })
     }
     // TO DO : Fonction qui permet l'affichage dynamique des emoji (check ou croix)
     // function dynamic_display(){
