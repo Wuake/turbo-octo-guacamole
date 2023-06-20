@@ -9,8 +9,8 @@ class FileUpload {
     cancel_btn = document.getElementById("cancel_btn");
 
     //id de la présentation pour enregistrer au bon endroit
-    id_presta = document.getElementById("btn_fichier").attributes["value_presta"].value;    
-
+    // id_presta = document.getElementById("btn_fichier").attributes["value_presta"].value;  
+    
     xhrajax;
     aborted = 0;
     constructor(input) {
@@ -92,8 +92,8 @@ class FileUpload {
         formData.append('path', existingPath);
         formData.append('nextSlice', nextChunk);
         formData.append('aborted', this.aborted);
-        formData.append('id_presta', this.id_presta);
-        console.log(this.id_presta);
+        formData.append('id_presta', id_presta);
+        console.log(id_presta);
 
 
         $.ajaxSetup({
@@ -154,7 +154,6 @@ class FileUpload {
        // if(this.aborted==1) {this.aborted=2; }
     };
 }
-
 var uploader;
 (function ($) {
     $('#upload_btn').on('click', (event) => {

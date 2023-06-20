@@ -21,7 +21,7 @@
                             <div class="d-flex w-100 justify-content-between">
                                 <img src="{{ intervenant.logo.url }}"
                                     style="width: 75px;height: 75px;border-radius: 30rem;">
-                                <h5 class="mb-1" style="align-self: center;"> {{ intervenant }} </h5>
+                                <h5 class="mb-1" style="align-self: center;"> {{ intervenant.prenom }} <strong>{{ intervenant.nom|upper }}</strong></h5>
                                 <div>
                                     <button class="btn btn-sm btn-primary edit-intervenant" data-id="{{ intervenant.id }}">Modifier</button>
                                     <button class="btn btn-sm btn-danger delete-intervenant" data-id="{{ intervenant.id }}">Supprimer</button>

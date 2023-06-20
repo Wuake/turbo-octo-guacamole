@@ -22,7 +22,7 @@
                             <div class="d-flex w-100 justify-content-between">
                                 <img src="{{ intervenant.logo.url }}"
                                     style="width: 75px;height: 75px;border-radius: 30rem;">
-                                <h5 class="mb-1" style="align-self: center;"> {{ intervenant }} </h5>
+                                <h5 class="mb-1" style="align-self: center;">{{ intervenant.prenom }} <strong>{{ intervenant.nom|upper }}</strong></h5>
                                 <!--<span class=" float-end"> <small> ${ pres.duration } min &nbsp;&nbsp; </small>
                                     <a href="#"
                                         onclick="editPres( '${ pres.id }','${ pres.title }','${ pres.duration }','${ pres.author_id }')"
@@ -122,30 +122,48 @@
     for (var i = 0; i < liste_personnes.length; i++) {
         liste_personnes[i].addEventListener("click", function () {
 
-            fetch("{% url 'planning:upload_intervenant' %}", {
-                    method: "POST",
-                    credentials: 'same-origin',
-                    headers: {
-                        "X-CSRFToken": csrf_token,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        id: this.id,
-                    }),
-                }).then(response => response.json())
-                .then(data => {
-                    // on vide le contenu hmtl pour éviter les doublons
-                    document.getElementById("presta_container").innerHTML = "";
-                    data.presentations.forEach(presta => {
-                        construct_presta(presta)//gère la construction des prestations
-                        dynamic_display(presta) //gère l'accusé de réception de présence de fichier (emoji)
+        //l'intervenant change de couleur
+        // this.style.backgroundColor = "#e9ecef";
+
+        fetch("{% url 'planning:upload_intervenant' %}", {
+                method: "POST",
+                credentials: 'same-origin',
+                headers: {
+                    "X-CSRFToken": csrf_token,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: this.id,
+                }),
+            }).then(response => response.json())
+            .then(data => {
+                // on vide le contenu hmtl pour éviter les doublons
+                document.getElementById("presta_container").innerHTML = "";
+                data.presentations.forEach(presta => {
+                    construct_presta(presta)//gère la construction des prestations
+                    dynamic_display(presta) //gère l'accusé de réception de présence de fichier (emoji)
+                });
+                // liste des boutons "Fichier"
+                let liste_btn = document.getElementsByClassName("btn_fichier");
+
+                // gestion de l'envoi de l'id de la présentation au serveur
+                for (let btn of liste_btn) {
+                btn.addEventListener("click", () => {
+                    id_presta = btn.getAttribute("value_presta");
+                    console.log(id_presta)  
+                    //test si le fichier existe déjà
+                    file_check(id_presta).then(res => {
+                        if (res == true){
+                            // console.log("overwrite", confirm_overwrite());
+                            if(confirm_overwrite() == false){
+                                popup_close();
+                            }
+                        }
                     });
-                    // for (i = 0; i <= data.presentations.length; i++){
-                    //     //APPELER LA FONCTION POUR CONSTRUIRE LES PRESTAs
-                    //     construct_presta()
-                    // }
-                })
-                .catch(error => console.error(error));
+                });
+                }
+            })
+            .catch(error => console.error(error));
         })
     }
 
@@ -164,7 +182,7 @@
 
                 <div id="list_presentation_block2" class="d-flex w-100 justify-content-between">
                     <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } ${presentation.id}min</h6>
-                    <button id="btn_fichier" type="button" class="btn btn-outline-secondary" onclick="popup()" value_presta="${presentation.id}">Fichier</button>
+                    <button id="btn_fichier" type="button" class="btn btn-outline-secondary btn_fichier" onclick="popup()" value_presta="${presentation.id}">Fichier</button>
                 </div>
             </li>
             <br/>
@@ -175,6 +193,7 @@
 
     function dynamic_display(presentation){
         //gestion des check mark pour la présence du fichier
+        //attention c'est asynchrone tout ça
         fetch("{% url 'planning:check_mark' %}", {
             method: "POST",
             credentials: 'same-origin',
@@ -198,23 +217,47 @@
             }
         })
     }
-    // TO DO : Fonction qui permet l'affichage dynamique des emoji (check ou croix)
-    // function dynamic_display(){
-    //     let check_mark = document.getElementById("check_mark")
-    //     let cross_mark = document.getElementById("cross_mark")
-    //     let list_input_pptx = document.getElementsByTagName("#input_pptx") 
-    //     // Evenement change lancé lors de l'upload d'un fichier
-    //     // input_pptx.addEventListener("change", dynamic_display)
 
-    //     if (input_pptx.value != ""){
-    //         check_mark.hidden = false
-    //         cross_mark.hidden = true
-    //     }
-    //     else{
-    //         check_mark.hidden = true
-    //         cross_mark.hidden = false
-    //     }
-    // }
+    function file_check(id_presta) {
+        //utilisation d'une promesse pour gérer l'asynchronisme de la requête 
+        //et pouvoir utiliser le résultat dans la fonction appelante
+        return new Promise((resolve, reject) => {
+            fetch("{% url 'planning:check_mark' %}", {
+                method: "POST",
+                credentials: 'same-origin',
+                headers: {
+                    "X-CSRFToken": csrf_token,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: id_presta,
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success == true) {
+                    console.log("le fichier existe déjà");
+                    resolve(true);
+                } else {
+                    console.log("le fichier n'existe pas");
+                    resolve(false);
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                reject(error);
+            });
+        });
+    }
+
+    // confirmation de l'écrasement d'un fichier
+    function confirm_overwrite() {
+        if (confirm("Un fichier existe déjà pour cette présentation. Voulez-vous l'écraser ?")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 </script>
 <script src="{% static 'js/upload.js' %}" defer></script>
 
