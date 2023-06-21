@@ -34,6 +34,10 @@ class IntervenantForm(forms.ModelForm):
     class Meta:
         model = Intervenant
         fields = '__all__'
+    
+    def clean_mon_champ(self):
+        data = self.cleaned_data['mon_champ']
+        return data.upper()
 
 
 class EditIntervenantForm(forms.ModelForm):

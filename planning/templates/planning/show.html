@@ -4,20 +4,92 @@
 
 {% block body %}
 
-<div class="container">
-    <div class="row">
-        <hr>
+<div class="container-fluid  p-0">
+    <div class="row g-2">
+        <div class="col-md-12">
 
-        <!-- Pour choisir les dates -->
-        {% for day in schedule %}
+            {% for day in days %}
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="radio_dates" id="radio_dates" value={{day.day}} onclick="setDate('{{day.day}}')">
-                <label class="form-check-label" for="inlineRadio1">{{day.day}}</label>
+                <input class="form-check-input" type="radio" name="radio_dates" id="radio_dates" value={{day.date}}
+                    onclick="setDate('{{day.date}}')">
+                <label class="form-check-label" for="inlineRadio1">{{day.date}}</label>
             </div>
-        {% endfor %}
+            {% endfor %}
+            <div class="card">
+                <div class="card-body" data-mdb-perfect-scrollbar="true"
+                    style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+                    <div class="list-group planning-area">
+                        <div class="ligne_planning">
+                            {% for room in rooms %}
+                            <div class="colonne_planning" id="room-{{ room.id }}">
+                                <div class="text_room_planning">
+                                    <p>{{ room }}</p>
+                                </div>
+                                <div class="vertical_colonne_planning d-flex" style="height: 41.4rem;">
+                                    
+                                    <div class="vr"></div>
+                                    
+                                </div>
+                            </div>
+                            {% endfor %}
+                            <div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <input type="hidden" id="js_data" data-url="" data-csrf="{{csrf_token}}" />
+        </div>
 
         
-    </div>
-</div>
+
+<!-- Inclure jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Fonction pour mettre à jour les sessions en fonction du jour sélectionné
+        function updateSessions(selectedDate) {
+            $.ajax({
+                url: '/get-sessions/',  // L'URL de la vue get_sessions
+                data: {
+                    'date': selectedDate
+                },
+                success: function(data) {
+                    
+                    // Itérer sur les données récupérées et mettre à jour les colonnes de salle
+                    for (var roomId in data) {
+                        var roomSessions = data[roomId];
+                        var roomColumn = $('#room-' + roomId);
+
+                        roomColumn.empty();  // Vider le contenu précédent de la colonne de salle
+
+                        // Itérer sur les sessions et ajouter le contenu à la colonne de salle
+                        for (var i = 0; i < roomSessions.length; i++) {
+                            var session = roomSessions[i];
+                            var sessionHtml = '<div class="session">' +
+                                '<p>Title: ' + session.title + '</p>' +
+                                '<p>Start: ' + session.start + '</p>' +
+                                '<p>End: ' + session.end + '</p>' +
+                                '</div>';
+
+                            roomColumn.append(sessionHtml);
+                        }
+                    }
+                }
+            });
+        }
+        function setDate(selectedDate) {
+            console.log(selectedDate)
+            updateSessions(selectedDate);
+        }
+        // Écouter les changements des boutons radio de date
+        $('input[name="radio_dates"]').on('change', function() {
+            var selectedDate = $(this).val();
+            updateSessions(selectedDate);
+        });
+    });
+</script>
 
 {% endblock %}

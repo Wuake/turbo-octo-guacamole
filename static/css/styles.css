@@ -168,3 +168,18 @@ background: #eee;
 	background-color: #dbdbdb;
 	border-radius: 5px;
 }
+
+.ligne_planning {
+	display: flex;
+}
+
+.colonne_planning {
+	display: flex;
+	width: 20%;
+	justify-content: space-between;
+}
+
+.text_room_planning {
+	width: 100%;
+	justify-content: center;
+  }

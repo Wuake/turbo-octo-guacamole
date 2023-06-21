@@ -97,25 +97,26 @@ def create(request):
 
 
 def show_plan(request):
-    congress = Congress.objects.first()
-    days = congress.confs_days.all()
-    rooms = congress.event_conf_name.all()
-    schedule = []
-
-    for day in days:
-        day_schedule = {'day': day, 'rooms': []}
-        for room in rooms:
-            sessions = Session.objects.filter(date=day, room=room).order_by('time_start')
-            room_data = {'room': room, 'sessions': []}
-            for session in sessions:
-                presentations = Presentation.objects.filter(session=session)
-                session_data = {'session': session, 'presentations': presentations}
-                room_data['sessions'].append(session_data)
-            day_schedule['rooms'].append(room_data)
-        schedule.append(day_schedule)
-
-    context = {'congress': congress, 'schedule': schedule}
+    congress = Congress.objects.get()
+    days = Day.objects.filter(congress__pk=congress.pk)
+    rooms = Room.objects.all()
+    
+    
+    context = {'congress': congress, 'days': days, 'rooms': rooms}
     return render(request, 'Planning/show.html', context)
+
+def get_sessions(request):
+    selected_date = request.GET.get('date')
+    print(selected_date)
+    room_sessions = {}
+
+    # Récupérer les sessions pour chaque salle en fonction du jour sélectionné
+    rooms = Room.objects.all()
+    for room in rooms:
+        sessions = Session.objects.filter(room=room, date__date=selected_date)
+        room_sessions[room.id] = [{'title': session.title, 'start': session.time_start, 'end': session.time_end} for session in sessions]
+
+    return JsonResponse(room_sessions)
 
 def show_pupitre(request):
     congres = Congress.objects.get()
@@ -214,7 +215,7 @@ def ajax_load_planning(request, pk, date):
             # print(personne)
             infos.append(" " + personne['nom'] + " " + personne['prenom'])
             infos_id.append(personne['id'])
-        print(infos_id)
+        # print(infos_id)
 
         # print(infos)
 
@@ -230,7 +231,7 @@ def ajax_load_planning(request, pk, date):
             
             "time_end": presentation.session.time_end.strftime('%H:%M'),
         }
-        print(presentation.session.time_start.strftime('%H:%M'), presentation.session.time_end.strftime('%H:%M'))
+        # print(presentation.session.time_start.strftime('%H:%M'), presentation.session.time_end.strftime('%H:%M'))
         presentations_list.append(presentation_dict)
 
     return JsonResponse(presentations_list, safe=False)
@@ -260,7 +261,7 @@ def ajax_add_session(request, pk):
     today = date.today()
     if request.method == 'POST':
         jsonbody = json.loads(request.body)
-        print("_________________________________________________________", jsonbody['id'],  jsonbody['title'])
+        # print("_________________________________________________________", jsonbody['id'],  jsonbody['title'])
         try:
             new = Session.objects.get(id=int(jsonbody['id']))
         except Session.DoesNotExist:
@@ -316,7 +317,7 @@ def ajax_add_intervenant(request, pk):
     today = date.today()
     if request.method == 'POST':
         jsonbody = json.loads(request.body)
-        print("_________________________________________________________", jsonbody['id'],  jsonbody['title'])
+        # print("_________________________________________________________", jsonbody['id'],  jsonbody['title'])
         try:
             new = Session.objects.get(id=int(jsonbody['id']))
         except Session.DoesNotExist:
@@ -375,7 +376,7 @@ def ajax_add_pres(request, pk):
     if request.method == 'POST':
         jsonbody = json.loads(request.body)
 
-        print(request.body)
+        # print(request.body)
 
         response_data['title'] = jsonbody['title']
         response_data['time2'] = jsonbody['duration']
@@ -503,13 +504,13 @@ def ouvrir_presentation(request):
 
     data = json.loads(request.body)
     id_pres = data.get('id', '')
-    print(id_pres)
+    # print(id_pres)
 
     presentation = Presentation.objects.get(id=id_pres)
-    print(presentation)
+    # print(presentation)
     fichier_pptx = presentation.fichier_pptx
-    print("le fichier =>" + fichier_pptx.name)
-    print("Voici le lien vers le fichier =>" + fichier_pptx.path)
+    # print("le fichier =>" + fichier_pptx.name)
+    # print("Voici le lien vers le fichier =>" + fichier_pptx.path)
 
     open_ppt("127.0.0.1", fichier_pptx.path)
     
@@ -537,7 +538,7 @@ def intervenant_select(request):
             'id': presentation.id,
             'title': presentation.title,
             'duration': presentation.duration,
-            'fichier_pptx': presentation.fichier_pptx.url if presentation.fichier_pptx else None
+            'fichier_pptx': presentation.fichier_pptx.path if presentation.fichier_pptx else None
         })
 
     # print(presentation_list)
