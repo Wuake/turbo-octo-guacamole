@@ -155,7 +155,9 @@
                     file_check(id_presta).then(res => {
                         if (res == true){
                             // console.log("overwrite", confirm_overwrite());
+                            //s'éxécute dans le if
                             if(confirm_overwrite() == false){
+                                //mettre un timer pour que la popup ait le temps de s'afficher
                                 popup_close();
                             }
                         }
