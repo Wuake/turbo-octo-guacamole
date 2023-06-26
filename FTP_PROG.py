@@ -3,7 +3,7 @@
 # * sdz.tdct.org/sdz/utiliser-le-module-ftp-de-python.html
 
 # * IMPORTATION DES MODULES
-import ftplib
+import ftplib as ftp
 
 # * DEFINITION DES VARIABLES DE CONNEXION
 host = "192.168.0.119"                     # ? ADRESSE IP DU SERVEUR FTP (DE LA MACHINE HOTE)

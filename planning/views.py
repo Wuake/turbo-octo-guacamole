@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
 
-import socket
+import socket, base64, json, ftplib as ftp
 from django.db.models import Q
 from django.core.files.storage import FileSystemStorage
 from django.http.response import JsonResponse
@@ -10,10 +10,6 @@ from django.contrib import messages
 #from django.contrib.auth.decorators import user_passes_test
 from datetime import date, timedelta, datetime
 from django.core.files.base import ContentFile
-import base64
-import json
-# Create your views here.
-
 from .models import *
 from .forms import CongressForm, SessionForm, PresentationForm, IntervenantForm, EditIntervenantForm
 

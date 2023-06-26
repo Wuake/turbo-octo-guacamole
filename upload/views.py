@@ -1,9 +1,21 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-import os
+import os, ftplib as ftp
 from planning.models import Intervenant, File, Presentation
 
+# * FONCTION DECORATRICE POUR UN MEILLEUR FEEDBACK
+# ! FAIT PLANTER PARCE QU'ELLE RETOURNE PAS UNE REPONSE HTTP
+# def decorator_feedback(func):
+#     def wrapper(*args, **kwargs):
+#         print("DEBUT DU TELECHARGEMENT")
+#         func(*args, **kwargs)
+#         print("FIN DU TELECHARGEMENT")
+#     return wrapper
+
+# * FONCTION QUI VA PERMETTRE DE FAIRE DE L'UPLOAD VIA FTP
+# @decorator_feedback
 def uploadfile(request):
+    connection()
     intervenant_all = Intervenant.objects.all()
     if request.method == 'POST':  
         file = request.FILES['file'].read()
@@ -28,6 +40,7 @@ def uploadfile(request):
                 FileFolder.path = path
                 FileFolder.eof = end
                 FileFolder.name = fileName
+                FileFolder.on_server = True
                 FileFolder.save()
 
                 #lien entre le fichier upload et la présentation
@@ -75,3 +88,39 @@ def uploadfile(request):
                     res = JsonResponse({'data':'No such file exists in the existingPath'})
                     return res
     return render(request, 'Planning/upload.html', {'intervenant_all':intervenant_all})
+
+#*####################################################################################################################
+#*                                             FONCTIONS POUR FTP                                                    #
+#*####################################################################################################################
+
+# * DEFINITION DES VARIABLES DE CONNEXION
+# host = "10.32.1.31" 
+host = "192.168.0.101"                    # ? ADRESSE IP DU SERVEUR FTP (DE LA MACHINE HOTE)
+user = "admin"
+password = "admin"
+#connect = ftp.ftplib(host, user, password) # ? CONNEXION AU SERVEUR FTP
+
+# * CONNEXION
+def connection():
+    server = ftp.FTP()
+    print("CONNEXION AU SERVEUR...")
+    try: 
+        server.connect(host, 21)
+        server.login(user, password)
+        print("CONNEXION AU SERVEUR REUSSIE")
+        # * appeller les différentes fonctions ici
+        #*########################################
+        server.dir() # ? AFFICHE LE CONTENU DU REPERTOIRE, PAS BESSOIN DE PRINT
+        server.mkd("Salle_1")  
+        #*########################################
+        server.quit()# ? DECONNEXION DU SERVEUR
+        print("DECONNEXION DU SERVEUR")
+    except ftp.all_errors as error:
+        print("ERREUR DE CONNEXION AU SERVEUR")
+        print(error)
+
+# * CREATION D'UN REPERTOIRE CIBLE
+# @param nom_du_repertoire, lien d'enregistrement
+# def create_folder():
+
+    

@@ -59,8 +59,9 @@ class File(models.Model):
     path = models.CharField(max_length=100)
     name = models.CharField(max_length=50)
     eof = models.BooleanField()
+    on_server = models.BooleanField()
+    in_room = models.BooleanField()
 
-    
 
 class Presentation(models.Model):
 	session = models.ForeignKey(Session, related_name="event_conf_name", on_delete=models.CASCADE)
