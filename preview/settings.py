@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     
-     'django_bootstrap5',
+    'django_bootstrap5',
     'django_extensions',
     'crispy_forms',
     "crispy_bootstrap5",
@@ -146,3 +146,8 @@ MEDIA_URL = "/media/"
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+GRAPH_MODELS = {
+    'all_applications': True,
+    'group_models': True,
+}

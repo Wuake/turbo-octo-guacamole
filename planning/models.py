@@ -59,8 +59,8 @@ class File(models.Model):
     path = models.CharField(max_length=100)
     name = models.CharField(max_length=50)
     eof = models.BooleanField()
-    on_server = models.BooleanField()
-    in_room = models.BooleanField()
+    on_server = models.BooleanField(default=False, null=True)
+    in_room = models.BooleanField(default=False, null=True)
 
 
 class Presentation(models.Model):

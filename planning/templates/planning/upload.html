@@ -105,6 +105,30 @@
 <script type="text/javascript">
     let csrf_token = $("#js_data").attr("data-csrf");
     var liste_personnes = document.querySelectorAll('.personne')
+    var input_file = document.getElementById("fileupload");
+
+    // Fonction appelée lors de la sélection du fichier
+    function handleFileSelection(event) {
+        const file = event.target.files[0];
+        const formData = new FormData();
+        formData.append('name', file.name);
+
+        fetch("{% url 'upload:absolute_path' %}", {
+            method: "POST",
+            credentials: 'same-origin',
+            headers: {
+                "X-CSRFToken": csrf_token,
+            },
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.file_path);
+        });
+    }
+
+    // // permet de savoir où se trouve le fichier sélectionné lors de l'upload
+    // input_file.addEventListener("change", handleFileSelection);
     
     // permet de fermer la popup en cliquant en dehors de la popup
     document.getElementById("overlay").addEventListener("dblclick", function () {

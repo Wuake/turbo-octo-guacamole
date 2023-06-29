@@ -93,8 +93,9 @@ class FileUpload {
         formData.append('nextSlice', nextChunk);
         formData.append('aborted', this.aborted);
         formData.append('id_presta', id_presta);
-        console.log(id_presta);
+        // TODO : RECUP LE LIEU DU FICHIER POUR L'APPEND
 
+        console.log(id_presta);
 
         $.ajaxSetup({
             headers: {
