@@ -1,5 +1,5 @@
 import ftplib as ftp
-import os
+import os, time
 
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -19,9 +19,9 @@ from planning.models import File, Intervenant, Presentation, Session
 #*####################################################################################################################
 
 # * DEFINITION DES VARIABLES DE CONNEXION
-# host = "10.32.1.31" 
+host = "10.32.1.70" 
 # host = "192.168.1.30"                    # ? ADRESSE IP DU SERVEUR FTP (DE LA MACHINE HOTE)
-host = "10.32.1.58"
+# host = "10.32.1.58"
 user = "admin"
 password = "admin"
 #connect = ftp.ftplib(host, user, password) # ? CONNEXION AU SERVEUR FTP
@@ -38,7 +38,12 @@ def uploadfile(request):
         aborted = request.POST['aborted']
         id_presta = request.POST['id_presta']
 
-        print("_________aborted____________", aborted) # ? SI 1 ON SUPPRIME LE FICHIER 
+        print("____________SIZE______________", len(file))
+
+        if len(file) == 0 or len(file) > 10000000000:
+            return JsonResponse({'data':'LA FICHIER EST TROP VOLUMINEUX (MAX 1GO)'})
+
+        # print("_________aborted____________", aborted) # ? SI 1 ON SUPPRIME LE FICHIER 
         if file=="" or fileName=="" or existingPath=="" or end=="" or nextSlice=="" :
             res = JsonResponse({'data':'Invalid Request....'})
             return res
@@ -46,20 +51,19 @@ def uploadfile(request):
             # ? SI LE FICHIER N'EXISTE PAS 
             if existingPath == 'null':
                 # path = 'media/presentations/' + fileName
-                path = 'media/presentations/unamed'
+                path = 'media/presentations/unamed.pptx'
                 with open(path, 'wb+') as destination:
                     destination.write(file)
-
                 FileFolder = File()# ? CREATION DE L'INSTANCE
-                FileFolder.existingPath = path
+                # FileFolder.existingPath = path
                 FileFolder.path = path
                 FileFolder.eof = end
-                FileFolder.name = "unamed"
+                FileFolder.name = "unamed.pptx"
                 FileFolder.on_server = True
                 FileFolder.save()
 
                 # ? RENOMMAGE DU FICHIER
-                file = File.objects.get(name="unamed")
+                file = File.objects.get(name="unamed.pptx")
                 file.name = f"fichier_{file.id}.pptx"
                 file.path = f"media/presentations/fichier_{file.id}.pptx"
                 file.existingPath = f"media/presentations/fichier_{file.id}.pptx" # * PAS SUR D'EN AVOIR BESOIN
@@ -67,11 +71,8 @@ def uploadfile(request):
 
                 #lien entre le fichier upload et la présentation
                 if id_presta != 'null':
-                    print("_________id_presta____________", id_presta)
                     presta = Presentation.objects.get(id=id_presta)
-                    print("_________presta_______________", presta)
                     presta.fichier_pptx = FileFolder
-                    print("_________presta_fichier_______", presta.fichier_pptx)
                     presta.save()
                     print(presta.fichier_pptx.path)
 
@@ -79,9 +80,7 @@ def uploadfile(request):
                     res = JsonResponse({'data':'Uploaded Successfully...','existingPath': fileName})
                 else:
                     res = JsonResponse({'existingPath': fileName})
-                print("__________TRANSFERT EN COURS___________")
-                # ! PROBLEME AVEC LE EXISTINGPATH
-                print("__________FILENAME___________", f"fichier_{file.id}.pptx")
+                # print("FILENAME : ", f"fichier_{file.id}.pptx")
                 file = File.objects.get(name=f"fichier_{file.id}.pptx")
                 transfer_file(fileName, file.id)
                 return res
@@ -147,20 +146,19 @@ def uploadfile(request):
 # * TRANSFERT D'UN FICHIER PPTX
 # @param nom_du_fichier matrixé (id_presta), lien d'enregistrement
 def transfer_file(name, id):
-    print("ENVOI DU FICHIER AU SERVEUR...")
     try:
         server = ftp.FTP()
         server.connect(host, 21)
         server.login(user, password)
         print("CONNEXION AU SERVEUR REUSSIE")
         # * VENIR CREER LE DOSSIER POUR LE RANGER DEDANS
-        print("__________CREATION DU REPERTOIRE___________")
+        print("CREATION DU REPERTOIRE...")
         salle = create_repo(server, id)
 
         if salle:
-            # print(f"fichier_{id}.pptx")
             try:
-                with open("media/presentations/" + name, "rb") as fichier: # ? LIEN DU FICHIER QU'ON VEUT ENVOYER
+                print("DEBUT DU TRANSFERT...")
+                with open("media/presentations/unamed.pptx", "rb") as fichier: # ? LIEN DU FICHIER QU'ON VEUT ENVOYER
                     server.storbinary(f"STOR {salle}/fichier_{id}.pptx", fichier) # ? NOM QU'ON LUI DONNE SUR LE SERVEUR
                 server.quit()
                 print("TRANSFERT DU FICHIER REUSSI")
@@ -176,8 +174,8 @@ def create_repo(server, id_file):
         session = Presentation.objects.filter(fichier_pptx=file_obj).first()  # Récupérer la présentation liée à l'objet File
         if session:
             salle = session.session.room.name  # Récupérer le nom de la salle à partir de la session
-            print("__________SESSION____________", session.session)
-            print("__________SALLE____________", salle)
+            # print("__________SESSION____________", session.session)
+            # print("__________SALLE____________", salle)
             try: 
                 if not repo_exists(server, salle):
                     server.mkd(salle)

@@ -15,7 +15,7 @@ class FileUpload {
     aborted = 0;
     constructor(input) {
         this.input = input
-        this.max_length = 1024 * 1024 * 10;
+        this.max_length = 1024 * 1024 * 1000; // * 1GB de taille max
     }
 
     create_progress_bar() {
@@ -84,18 +84,15 @@ class FileUpload {
             end = 0;
         }
 
-        $('.textbox').text("Uploading file : " + this.file.name)
+        $('.textbox').text("Uploading file : " + this.file.name);
 
-        formData.append('file', currentChunk)
-        formData.append('filename', this.file.name)
-        formData.append('end', end)
+        formData.append('file', currentChunk);
+        formData.append('filename', this.file.name);
+        formData.append('end', end);
         formData.append('path', existingPath);
         formData.append('nextSlice', nextChunk);
         formData.append('aborted', this.aborted);
         formData.append('id_presta', id_presta);
-        // TODO : RECUP LE LIEU DU FICHIER POUR L'APPEND
-
-        console.log(id_presta);
 
         $.ajaxSetup({
             headers: {
