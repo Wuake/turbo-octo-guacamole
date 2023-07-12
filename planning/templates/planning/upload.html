@@ -101,7 +101,7 @@
         </div>
     </section>
 </div>
-
+<script link></script>
 <script type="text/javascript">
     let csrf_token = $("#js_data").attr("data-csrf");
     var liste_personnes = document.querySelectorAll('.personne')
@@ -166,6 +166,7 @@
                 data.presentations.forEach(presta => {
                     construct_presta(presta)//gère la construction des prestations
                     dynamic_display(presta) //gère l'accusé de réception de présence de fichier (emoji)
+                    on_laptop(presta) //gère l'affichage de l'état du fichier sur le pc pupitre
                 });
                 // liste des boutons "Fichier"
                 let liste_btn = document.getElementsByClassName("btn_fichier");
@@ -177,6 +178,7 @@
                     console.log(id_presta)  
                     //test si le fichier existe déjà
                     file_check(id_presta).then(res => {
+                        
                         if (res == true){
                             // console.log("overwrite", confirm_overwrite());
                             //s'éxécute dans le if
@@ -192,6 +194,23 @@
             .catch(error => console.error(error));
         })
     }
+    function ouvrir_presentation(presentation_id) {
+        fetch("{% url 'planning:open_pres' %}", {
+        method:"POST",
+        credentials: 'same-origin',
+        headers: {
+            "X-CSRFToken": csrf_token,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            id: presentation_id,
+        }),
+        }).then(function (response) {
+        console.log("Présentation ouverte");
+        }).catch(function (error) {
+        console.log("Une erreur s'est produite : " + error)
+        });
+    }
 
     function construct_presta(presentation) {
         console.log(presentation.id)
@@ -200,14 +219,16 @@
             <li id="${presentation.id}" class="list-group-item align-items-start list-group-item-action">                
                 <div id="list_presentation_block1" class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"> ${presentation.title}</h5>
-                    <span class=" float-end">
-                        <p id="check_mark_${ presentation.id }" hidden>✅</p>
+                    <span id="emojis" class="float-end">
+                        <p id="check_mark_${ presentation.id }" hidden>✅🌐</p>
+                        <p id="laptop_${ presentation.id }" hidden>💻</p>
                         <p id="cross_mark_${ presentation.id }">❌</p>
-                    </span> 
+                    </span>
                 </div>
 
                 <div id="list_presentation_block2" class="d-flex w-100 justify-content-between">
                     <h6 id="duree" class="d-flex align-self-end">${ presentation.duration } min</h6>
+                    <span onclick=ouvrir_presentation(${ presentation.id }) style="cursor: pointer"><u>tester le fichier</u></span>
                     <button id="btn_fichier" type="button" class="btn btn-outline-secondary btn_fichier" onclick="popup()" value_presta="${presentation.id}">Fichier</button>
                 </div>
             </li>
@@ -240,6 +261,31 @@
             } else {
                 document.getElementById(`check_mark_${ presentation.id }`).hidden = true
                 document.getElementById(`cross_mark_${ presentation.id }`).hidden = false
+            }
+        })
+    }
+
+    function on_laptop(presentation){
+        //gestion des check mark pour la présence du fichier
+        //attention c'est asynchrone tout ça
+        fetch("{% url 'planning:on_laptop' %}", {
+            method: "POST",
+            credentials: 'same-origin',
+            headers: {
+                "X-CSRFToken": csrf_token,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                file: presentation.fichier_pptx,
+            }),
+        })
+        //test si la réponse est ok
+        .then(response => response.json())
+        .then(data => {
+            if (data.success == true) {
+                document.getElementById(`laptop_${ presentation.id }`).hidden = false
+            } else {
+                document.getElementById(`laptop_${ presentation.id }`).hidden = true
             }
         })
     }

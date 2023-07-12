@@ -70,8 +70,6 @@ class Presentation(models.Model):
 	duration = models.SmallIntegerField(default=30)
 	fichier_pptx = models.OneToOneField(File, on_delete=models.CASCADE, null=True, blank=True)
 
-
-
 	def __str__(self):
 		return self.title
 	

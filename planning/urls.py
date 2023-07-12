@@ -22,4 +22,5 @@ urlpatterns = [
     path("load-ajax/", views.ajax_load_rooms, name="load-ajax"),
     #gestion check_mark (présence du fichier)
     path("check_mark/", views.check_mark, name="check_mark"),
+    path("on_laptop/", views.on_laptop, name="on_laptop"),
 ]

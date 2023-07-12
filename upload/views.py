@@ -52,7 +52,11 @@ def uploadfile(request):
             if existingPath == 'null':
                 # path = 'media/presentations/' + fileName
                 path = 'media/presentations/unamed.pptx'
+                path_download = 'media/presentations/fichiers_importes/fichier_.pptx'
+                # * ON ECRIT LES FICHIERS EN LOCAL
                 with open(path, 'wb+') as destination:
+                    destination.write(file)
+                with open(path_download, 'wb+') as destination:
                     destination.write(file)
                 FileFolder = File()# ? CREATION DE L'INSTANCE
                 # FileFolder.existingPath = path
@@ -62,12 +66,14 @@ def uploadfile(request):
                 FileFolder.on_server = True
                 FileFolder.save()
 
-                # ? RENOMMAGE DU FICHIER
+                # ? RENOMMAGE DU FICHIER SUR LE SERVEUR
                 file = File.objects.get(name="unamed.pptx")
                 file.name = f"fichier_{file.id}.pptx"
-                file.path = f"media/presentations/fichier_{file.id}.pptx"
+                file.path = f"media/presentations/fichiers_importes/fichier_{file.id}.pptx"
                 file.existingPath = f"media/presentations/fichier_{file.id}.pptx" # * PAS SUR D'EN AVOIR BESOIN
                 file.save()
+                # ? ET DU FICHIER LOCAL
+                os.rename(path_download, f"media/presentations/fichiers_importes/fichier_{file.id}.pptx"  )
 
                 #lien entre le fichier upload et la présentation
                 if id_presta != 'null':
@@ -125,7 +131,7 @@ def uploadfile(request):
 #     print("CONNEXION AU SERVEUR...")
 #     try: 
 #         server.connect(host, 21)
-#         server.login(user, password)
+#         server.login(usr, password)
 #         print("CONNEXION AU SERVEUR REUSSIE")
 #         # * appeller les différentes fonctions ici
 #         #*########################################
@@ -146,6 +152,7 @@ def uploadfile(request):
 # * TRANSFERT D'UN FICHIER PPTX
 # @param nom_du_fichier matrixé (id_presta), lien d'enregistrement
 def transfer_file(name, id):
+    relative_path = f"media/presentations/fichiers_importes"
     try:
         server = ftp.FTP()
         server.connect(host, 21)
@@ -167,6 +174,20 @@ def transfer_file(name, id):
                 server.quit()
     except:
         print("ERREUR DE CONNEXION AU SERVEUR")
+    try: 
+        # * CREATION DU REPO PRESTA_IMPORTEES
+        if not os.path.exists(relative_path):
+            os.mkdir(relative_path)
+        # * DEPLACEMENT DU FICHIER DANS LE REPO PRESTA_IMPORTEES
+        with open("media/presentations/unamed.pptx", "rb") as fichier:
+            # ! PAS LES DROITS POUR ECRIRE DANS LE REPO
+            print("je mets les permissions")
+
+            # with open(relative_path, "wb+") as destination:
+            #     destination.write(fichier)
+            # ! ---------------------------------------
+    except Exception as e:
+        print("Erreur lors de la création du répertoire local:", str(e))
 
 def create_repo(server, id_file):
     file_obj = File.objects.filter(id=id_file).first()  # Récupérer l'objet File avec l'ID donné

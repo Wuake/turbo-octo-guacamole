@@ -504,10 +504,6 @@ def ouvrir_presentation(request):
     fichier_pptx = presentation.fichier_pptx
     print("le fichier => " + fichier_pptx.name)
     print("Voici le lien vers le fichier => " + fichier_pptx.path)
-
-    # open_ppt("127.0.0.1", fichier_pptx.path)
-
-    #try catch en python
     try:
         open_ppt("127.0.0.1", fichier_pptx.path)
         res = True
@@ -553,15 +549,35 @@ def upload_file(request):
     return JsonResponse({"link": data})
 
 def check_mark(request):
-    data = json.loads(request.body)
-    id = data.get('id', '')
-    presentation = Presentation.objects.get(id=id)
-    print("VOICI L'ID DE LA PRESENTATION",presentation.id)
-
+    presentation = None
+    res = False
+    try:
+        data = json.loads(request.body)
+        id = data.get('id', '')
+        presentation = Presentation.objects.get(id=id)
+    except Exception as e:
+        print(e)
     if presentation.fichier_pptx is not None and presentation.fichier_pptx.path is not None:
         res = True
     else:
         res = False
         print("PAS DE PRESENTATION TROUVEE DANS LA BASE DE DONNEES")
+
+    return JsonResponse({"success": res})
+
+def on_laptop(request):
+    presentation = None
+    res = False
+    try: 
+        data = json.loads(request.body)
+        fichier_pptx = data.get('file', '')
+        presentation = File.objects.get(path=fichier_pptx)
+    except Exception as e:
+        print(e)
+    if presentation.in_room == True:
+        res = True
+    else:
+        res = False
+        print("Le fichier n'est pas sur le pc pupitre")
 
     return JsonResponse({"success": res})

@@ -168,3 +168,6 @@ background: #eee;
 	background-color: #dbdbdb;
 	border-radius: 5px;
 }
+#emojis{
+	display: inline-flex;
+}
