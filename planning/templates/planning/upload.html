@@ -220,7 +220,7 @@
                 <div id="list_presentation_block1" class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1"> ${presentation.title}</h5>
                     <span id="emojis" class="float-end">
-                        <p id="check_mark_${ presentation.id }" hidden>✅🌐</p>
+                        <p id="check_mark_${ presentation.id }" hidden>✅</p>
                         <p id="laptop_${ presentation.id }" hidden>💻</p>
                         <p id="cross_mark_${ presentation.id }">❌</p>
                     </span>
@@ -283,6 +283,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success == true) {
+                console.log(data.success)
                 document.getElementById(`laptop_${ presentation.id }`).hidden = false
             } else {
                 document.getElementById(`laptop_${ presentation.id }`).hidden = true

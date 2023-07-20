@@ -11,10 +11,7 @@
             <div class="card">
                 <div class="card-body" data-mdb-perfect-scrollbar="true"
                     style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
-
                     <div class="list-group planning-area">
-                        <!-- planning area by ajax -->
-
                         {% for intervenant in intervenants %}
                         <li id="{{ intervenant.id }}"
                             class="list-group-item personne align-items-start list-group-item-action">
@@ -41,7 +38,7 @@
                     {% csrf_token %}
                     {{ Intervenant_form|crispy }}
                     <hr>
-                    <button type="submit" class="btn btn-info" id="sess_submit">Valider Session</button>
+                    <button type="submit" class="btn btn-info" id="sess_submit">Valider</button>
                 </form>
             </div>
 

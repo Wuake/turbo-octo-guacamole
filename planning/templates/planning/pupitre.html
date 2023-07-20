@@ -16,7 +16,7 @@
         <p> Désolé, pas de salles disponibles !</p>
         {% endfor %}
       </div>
-      <button id="add_room" class="btn">+</button>
+      <button onclick="fetching_files()" style="background-color: rgb(246, 186, 75); height: 35px; padding-top: 0;" id="synchro" class="btn"><img style="width: 10px; height: 15px;" src="../../../media/images/synchro.png" alt="synchronisation des fichiers"></button>
     </div>
     <!-- <hr class="divider" /> -->
   </div>
@@ -53,7 +53,6 @@
       </div>
       <div id="form_pres" display='none'>
         {{ pres_form|crispy }}
-
         <button type="button" id="add_field" class="btn btn-secondary">Intervenant supplémentaire</button>
         <hr>
         <button class="btn btn-primary" id="pres_submit">Valider Présentation</button>
@@ -61,6 +60,12 @@
     </div>
   </div>
   <input type="hidden" id="js_data" data-url="" data-csrf="{{csrf_token}}" />
+</div>
+<div id="overlay">
+  <section id="chargement">
+    <h5>Synchronisation des fichiers en cours...</h5>
+    <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+  </section>
 </div>
 
 <script type="text/javascript" defer>
@@ -74,8 +79,28 @@
   let sess_sel = 0;
   let on_edit = false;
 
-  
+  document.getElementById("synchro").addEventListener('click', function(){
+    //popup de synchronisation
+    document.getElementById("overlay").style.display = "block";
+  });
 
+  function fetching_files(salle){
+    fetch("{% url 'planning:fetching_files' %}", {
+      method: "POST",
+      credentials: 'same-origin',
+      headers: {
+        "Content-Type": 'application/json',
+        'X-CSRFToken': csrf_token
+      },
+      body: {
+        salle: null, /*trouver un moyen de le chopper dynamiquement*/
+      }
+    }).then(e => e.json()).then(messages => {
+      alert("Synchronisation des fichiers effectuée !")
+      //arreter la popup de synchronisation 
+      document.getElementById("overlay").style.display = "none";
+    })
+  }
   // Ajoute une salle quand on clique sur le bouton + ( id="add_room" )
   // ! ne se met pas à jour apres l'insertion d'une salle
   // 1 clique fonctionne, puis plus rien
@@ -106,7 +131,6 @@
 
   var input2 = document.getElementById("div_id_author2")
   input2.hidden = true
-
 
   addButton.addEventListener("click", function () {
 
@@ -204,8 +228,6 @@
     load_planning(room_id);
     room_sel = room_id;
   }
-
-  
 
   // selection de la date
   function setDate(date) {

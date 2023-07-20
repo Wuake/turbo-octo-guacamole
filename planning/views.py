@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 #from django.contrib.auth.decorators import login_required
 from django.http import Http404
 
-import socket, base64, json, ftplib as ftp
+import socket, base64, json, ftplib as ftp, os
 from django.db.models import Q
 from django.core.files.storage import FileSystemStorage
 from django.http.response import JsonResponse
@@ -568,16 +568,77 @@ def check_mark(request):
 def on_laptop(request):
     presentation = None
     res = False
-    try: 
+    try:
         data = json.loads(request.body)
         fichier_pptx = data.get('file', '')
         presentation = File.objects.get(path=fichier_pptx)
     except Exception as e:
         print(e)
-    if presentation.in_room == True:
+    if presentation != None and presentation.in_room == True:
         res = True
     else:
         res = False
         print("Le fichier n'est pas sur le pc pupitre")
 
     return JsonResponse({"success": res})
+
+# * CHAQUE PC A UNE SEULE SALLE ATTRIBUEE A TRAVERS TOUS LES CONGRES
+def fetching_files(request):
+    # * ADDRESSE DU PC SERVEUR
+    host = "10.32.1.2"
+    user = "admin"
+    password = "admin"
+    # * DOSSIER DE STOCKAGE DES FICHIERS
+    salle = "Salle 1"
+    chemin_salle = "C:/Users/Mediadone/Documents/CONGRES/"
+
+    if request.method == 'POST':    
+        salle = "Salle 1"
+        files = []
+        try:
+            print("CONNEXION AU SERVEUR...")
+            server = ftp.FTP()
+            server.connect(host, 21)
+            server.login(user, password)
+            print("CONNEXION SERVEUR POUR TELECHARGEMENT DES FICHIERS REUSSIE")
+            # ? creation du dossier de stockage des fichiers
+            os.makedirs(f"{chemin_salle}/{salle}", exist_ok=True)
+            server.sendcmd(f"cwd Salle 1/") 
+            # ? recuperation des fichiers
+            def ajout_fichier(fichier):
+                files.append(fichier)
+            server.retrlines("NLST", callback=ajout_fichier) 
+            
+            print("cc", files)
+            # ? téléchargement des fichiers
+            os.chmod(chemin_salle + salle, 0o777)
+            print(f"PERMISSIONS CHANGEES {chemin_salle}{salle}")
+            # for file in files: 
+            #     with open(chemin_salle + salle, "wb") as fichier_local:
+            #         server.retrbinary("RETR " + file, fichier_local.write) 
+            # # the name of file you want to download from the FTP server
+            for file in files:
+                with open(chemin_salle + salle + "/" + file, "wb") as filename:
+                    # use FTP's RETR command to download the file
+                    server.retrbinary(f"RETR {file}", filename.write)  
+            server.quit()
+            
+
+        except Exception as e:
+            print("ERREUR DE CONNEXION AU SERVEUR")
+            print("Erreur =>", e)
+
+        # ? on va chercher l'ip de la machine sur laquelle onclique sur le bouton refresh 
+        # ? pour venir mettre à jour la liste des fichiers sur le pupitre  (SECURITE pour PLUS TARD)
+        adresse_ip = request.META.get('REMOTE_ADDR', None)
+
+        if not adresse_ip:
+            try:
+                adresse_ip = socket.gethostbyname(socket.gethostname())
+            except socket.gaierror:
+                adresse_ip = "Adresse IP non disponible"
+    else:
+        print("METHODE GET ET NON POST")
+    
+
+    return JsonResponse({"adresse_ip": adresse_ip})

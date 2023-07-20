@@ -19,7 +19,7 @@ from planning.models import File, Intervenant, Presentation, Session
 #*####################################################################################################################
 
 # * DEFINITION DES VARIABLES DE CONNEXION
-host = "10.32.1.70" 
+host = "10.32.1.58" 
 # host = "192.168.1.30"                    # ? ADRESSE IP DU SERVEUR FTP (DE LA MACHINE HOTE)
 # host = "10.32.1.58"
 user = "admin"
@@ -27,6 +27,7 @@ password = "admin"
 #connect = ftp.ftplib(host, user, password) # ? CONNEXION AU SERVEUR FTP
 
 def uploadfile(request):
+    relative_path = f"media/presentations/fichiers_importes"
     intervenant_all = Intervenant.objects.all()
     # ? RECUPERATION DES DONNEES DE LA REQUETE
     if request.method == 'POST':  
@@ -53,6 +54,12 @@ def uploadfile(request):
                 # path = 'media/presentations/' + fileName
                 path = 'media/presentations/unamed.pptx'
                 path_download = 'media/presentations/fichiers_importes/fichier_.pptx'
+                # * CREATION DU REPO PRESTA_IMPORTEES
+                try:
+                    if not os.path.exists(relative_path):
+                        os.mkdir(relative_path)
+                except Exception as e:
+                    print("Erreur lors de la création du répertoire local:", str(e))
                 # * ON ECRIT LES FICHIERS EN LOCAL
                 with open(path, 'wb+') as destination:
                     destination.write(file)
@@ -88,7 +95,7 @@ def uploadfile(request):
                     res = JsonResponse({'existingPath': fileName})
                 # print("FILENAME : ", f"fichier_{file.id}.pptx")
                 file = File.objects.get(name=f"fichier_{file.id}.pptx")
-                transfer_file(fileName, file.id)
+                transfer_file(file.id)
                 return res
             # ? SI LE FICHIER EXISTE
             else:
@@ -120,7 +127,7 @@ def uploadfile(request):
                     res = JsonResponse({'data':'No such file exists in the existingPath'})
                     print("__________TRANSFERT EN COURS___________")
                     file = File.objects.get(name=fileName)
-                    transfer_file(fileName, file.id)
+                    transfer_file(file.id)
                     return res
     return render(request, 'Planning/upload.html', {'intervenant_all':intervenant_all})
 
@@ -151,8 +158,7 @@ def uploadfile(request):
 
 # * TRANSFERT D'UN FICHIER PPTX
 # @param nom_du_fichier matrixé (id_presta), lien d'enregistrement
-def transfer_file(name, id):
-    relative_path = f"media/presentations/fichiers_importes"
+def transfer_file(id):
     try:
         server = ftp.FTP()
         server.connect(host, 21)
@@ -174,21 +180,7 @@ def transfer_file(name, id):
                 server.quit()
     except:
         print("ERREUR DE CONNEXION AU SERVEUR")
-    try: 
-        # * CREATION DU REPO PRESTA_IMPORTEES
-        if not os.path.exists(relative_path):
-            os.mkdir(relative_path)
-        # * DEPLACEMENT DU FICHIER DANS LE REPO PRESTA_IMPORTEES
-        with open("media/presentations/unamed.pptx", "rb") as fichier:
-            # ! PAS LES DROITS POUR ECRIRE DANS LE REPO
-            print("je mets les permissions")
-
-            # with open(relative_path, "wb+") as destination:
-            #     destination.write(fichier)
-            # ! ---------------------------------------
-    except Exception as e:
-        print("Erreur lors de la création du répertoire local:", str(e))
-
+    
 def create_repo(server, id_file):
     file_obj = File.objects.filter(id=id_file).first()  # Récupérer l'objet File avec l'ID donné
     if file_obj:
@@ -217,7 +209,6 @@ def repo_exists(server, dossier):
     except Exception as e:
         print("Erreur lors de la vérification du dossier :", str(e))
         return False
-
     
 def absolute_path(request):
     if request.method == 'POST':
