@@ -353,6 +353,23 @@
     div.scrollIntoView()
   }
 
+  function couleur_bouton(){
+    fetch("{% url 'planning:couleur_bouton' %}", {
+      method:"POST",
+      credentials: 'same-origin',
+      headers: {
+        "X-CSRFToken": csrf_token,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        // salle : 
+      }),
+    }).then(function (response) {
+      console.log("Présentation ouverte");
+    }).catch(function (error) {
+      console.log("Une erreur s'est produite : " + error)
+    });
+  }
 
   function ouvrir_presentation(presentation_id) {
     fetch("{% url 'planning:open_pres' %}", {
