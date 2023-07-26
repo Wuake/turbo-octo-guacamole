@@ -15,6 +15,7 @@
                     <div class="list-group planning-area">
                         <!-- planning area by ajax -->
 
+                        <input type="text" id="search_input" class="form-control" placeholder="Rechercher un intervenant">
 
                         {% for intervenant in intervenant_all %}
 
@@ -174,7 +175,12 @@
     //         }
     //     })
     // }
-
+    $("#search_input").on("keyup", function () {
+            var value = $(this).val().toLowerCase();
+            $(".personne").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
 
     function construct_presta(presentation) {
         let div = document.createElement("div");

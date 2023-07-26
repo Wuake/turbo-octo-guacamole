@@ -20,7 +20,7 @@ from django.conf.urls.static import static
 from django.urls import include
 
 from . import views
-from planning.views import show_plan
+from planning.views import show_plan, planning_plan
 from preview import settings
 
 handler404 = 'preview.views.handler404'
@@ -29,6 +29,7 @@ handler500 = 'preview.views.handler500'
 urlpatterns = [
     path('', views.home, name="home"),
     path('plan/', show_plan, name="show_plan"),
+    path('planning/', planning_plan, name="planning_plan"),
     re_path(r'^planning/', include('planning.urls')),
     re_path(r'^upload/', include('upload.urls')),
 

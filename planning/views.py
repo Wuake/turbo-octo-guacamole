@@ -12,6 +12,7 @@ from datetime import date, timedelta, datetime
 from django.core.files.base import ContentFile
 import base64
 import json
+import datetime as datetime2
 # Create your views here.
 
 from .models import *
@@ -97,26 +98,177 @@ def create(request):
 
 
 def show_plan(request):
-    congress = Congress.objects.get()
-    days = Day.objects.filter(congress__pk=congress.pk)
-    rooms = Room.objects.all()
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # print("coucou1")
+
+        date = request.POST.get('date')
+
+        # Récupérer les sessions pour la date sélectionnée
+        day = get_object_or_404(Day, date=date)
+        sessions = Session.objects.filter(date=day).order_by('time_start')
+
+        # Créer des listes pour stocker les données des sessions
+        session_data = {}
+        start_times = {}
+        end_times = {}
+        print()
+        minheure = "07:00:00"
+        maxheure = "21:00:00"
+        print("---------------Horraire de base-------------------")
+        print(minheure)
+        print(maxheure)
+
+        for session in sessions:
+            room_name = session.room.name
+            session_title = session.title
+            session_starttime = session.time_start.strftime('%H:%M:%S')
+            session_endtime = session.time_end.strftime('%H:%M:%S')
+
+            
+            print("---------------Session start et end-------------------")
+            print(session_starttime)
+            print(session_endtime)
+
+            if session_starttime < minheure:
+                minheure = session_starttime
+            if session_endtime > maxheure:
+                maxheure = session_starttime
+
+            print("---------------Horraire min et max-------------------")
+            print(minheure)
+            print(maxheure)
+
+            if room_name in session_data:
+                session_data[room_name].append(session_title)
+                start_times[room_name].append(session_starttime)
+                end_times[room_name].append(session_endtime)
+            else:
+                session_data[room_name] = [session_title]
+                start_times[room_name] = [session_starttime]
+                end_times[room_name] = [session_endtime]
+
+        # Exemple de réponse JSON avec les données des sessions et les horaires de début/fin
+        data = {
+            'sessions': session_data,
+            'start_times': start_times,
+            'end_times': end_times,
+            'min_heure': minheure,
+            'max_heure': maxheure
+        }
+
+        return JsonResponse(data)
+    else:
+        congress = Congress.objects.get()
+        days = Day.objects.filter(congress__pk=congress.pk)
+        rooms = Room.objects.all()
+        print("coucou2")
+        context = {'congress': congress, 'days': days, 'rooms': rooms}
+        return render(request, 'Planning/show.html', context)
     
+def planning_plan(request):
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        # print("coucou1")
+
+        date = request.POST.get('date')
+
+        # Récupérer les sessions pour la date sélectionnée
+        day = get_object_or_404(Day, date=date)
+        sessions = Session.objects.filter(date=day).order_by('time_start')
+
+        # Créer des listes pour stocker les données des sessions
+        session_data = {}
+        start_times = {}
+        end_times = {}
+        print()
+        minheure = "07:00:00"
+        maxheure = "21:00:00"
+        heurechangenumber = 0
+        # print("---------------Horraire de base-------------------")
+        # print(minheure)
+        # print(maxheure)
+
+        for session in sessions:
+            room_name = session.room.name
+            session_title = session.title
+            session_starttime = session.time_start.strftime('%H:%M:%S')
+            session_endtime = session.time_end.strftime('%H:%M:%S')
+
+            
+            # print("---------------Session start et end-------------------")
+            # print(session_starttime)
+            # print(session_endtime)
+
+            minheure_dt = datetime2.datetime.strptime(minheure, '%H:%M:%S').time()
+            maxheure_dt = datetime2.datetime.strptime(maxheure, '%H:%M:%S').time()
+            session_starttime_dt = datetime2.datetime.strptime(session_starttime, '%H:%M:%S').time()
+            session_endtime_dt = datetime2.datetime.strptime(session_endtime, '%H:%M:%S').time()
+
+            if session_starttime_dt < minheure_dt:
+                time_diff = datetime2.datetime.combine(datetime2.date.today(), session_starttime_dt) - datetime2.datetime.combine(datetime2.date.today(), minheure_dt)
+                hours_diff = round(time_diff.total_seconds() / 3600)
+                minheure = session_starttime
+                heurechangenumber -= hours_diff
+            # print(heurechangenumber)
+
+            if session_endtime_dt > maxheure_dt:
+                time_diff = datetime2.datetime.combine(datetime2.date.today(), session_endtime_dt) - datetime2.datetime.combine(datetime2.date.today(), maxheure_dt)
+                hours_diff = round(time_diff.total_seconds() / 3600)
+                maxheure = session_endtime
+                heurechangenumber -= hours_diff
+
+            # print("---------------Horraire min et max-------------------")
+            # print(minheure)
+            # print(maxheure)
+
+            if room_name in session_data:
+                session_data[room_name].append(session_title)
+                start_times[room_name].append(session_starttime)
+                end_times[room_name].append(session_endtime)
+            else:
+                session_data[room_name] = [session_title]
+                start_times[room_name] = [session_starttime]
+                end_times[room_name] = [session_endtime]
+
+        # Exemple de réponse JSON avec les données des sessions et les horaires de début/fin
+        data = {
+            'sessions': session_data,
+            'start_times': start_times,
+            'end_times': end_times,
+            'min_heure': minheure,
+            'max_heure': maxheure,
+            'heurechangenumber': heurechangenumber
+        }
+
+        return JsonResponse(data)
+    else:
+        congress = Congress.objects.get()
+        days = Day.objects.filter(congress__pk=congress.pk)
+        rooms = Room.objects.all()
+        print(congress.pk)
+        print("coucou2")
+        context = {'congress': congress, 'days': days, 'rooms': rooms}
+        return render(request, 'Planning/planning.html', context)
     
-    context = {'congress': congress, 'days': days, 'rooms': rooms}
-    return render(request, 'Planning/show.html', context)
 
 def get_sessions(request):
     selected_date = request.GET.get('date')
-    print(selected_date)
-    room_sessions = {}
-
-    # Récupérer les sessions pour chaque salle en fonction du jour sélectionné
-    rooms = Room.objects.all()
-    for room in rooms:
-        sessions = Session.objects.filter(room=room, date__date=selected_date)
-        room_sessions[room.id] = [{'title': session.title, 'start': session.time_start, 'end': session.time_end} for session in sessions]
-
-    return JsonResponse(room_sessions)
+    # Effectuer les opérations nécessaires pour récupérer les sessions en fonction de la date
+    
+    # Supposons que vous ayez une liste de sessions que vous souhaitez renvoyer
+    sessions = [
+        {
+            'title': 'Session 1',
+            'start': '2023-06-21 09:00',
+            'end': '2023-06-21 11:00'
+        },
+        {
+            'title': 'Session 2',
+            'start': '2023-06-21 14:00',
+            'end': '2023-06-21 16:00'
+        }
+    ]
+    
+    return JsonResponse(sessions, safe=False)
 
 def show_pupitre(request):
     congres = Congress.objects.get()
