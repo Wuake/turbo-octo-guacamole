@@ -14,6 +14,9 @@
 
                     <div class="list-group planning-area">
                         <!-- planning area by ajax -->
+
+                        <input type="text" id="search_input" class="form-control" placeholder="Rechercher un intervenant">
+
                         {% for intervenant in intervenant_all %}
 
                         <li id="{{ intervenant.id }}"
@@ -211,6 +214,28 @@
         console.log("Une erreur s'est produite : " + error)
         });
     }
+    // function uploadFile() {
+    //     var data = new FormData();
+    //     data.append("file", $("input[id^='file']")[0].files[0]);
+    //     data.append("csrfmiddlewaretoken", "{{ csrf_token }}");
+    //     $.ajax({
+    //         method: "POST",
+    //         url: "{% url 'planning:upload' %}",
+    //         processData: false,
+    //         contentType: false,
+    //         mimeType: "multipart/form-data",
+    //         data: data,
+    //         success: function(res) {
+    //             console.log(res)
+    //         }
+    //     })
+    // }
+    $("#search_input").on("keyup", function () {
+            var value = $(this).val().toLowerCase();
+            $(".personne").filter(function () {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+            });
+        });
 
     function construct_presta(presentation) {
         console.log(presentation.id)

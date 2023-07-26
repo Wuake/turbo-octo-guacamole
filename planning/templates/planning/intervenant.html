@@ -11,6 +11,8 @@
             <div class="card">
                 <div class="card-body" data-mdb-perfect-scrollbar="true"
                     style="padding-right:0; padding-left:0; height:695px; overflow-y: scroll;">
+
+                    <input type="text" id="searchInput" class="form-control" placeholder="Rechercher un intervenant">
                     <div class="list-group planning-area">
                         {% for intervenant in intervenants %}
                         <li id="{{ intervenant.id }}"
@@ -20,9 +22,9 @@
                                     style="width: 75px;height: 75px;border-radius: 30rem;">
                                 <h5 class="mb-1" style="align-self: center;"> {{ intervenant.prenom }} <strong>{{ intervenant.nom|upper }}</strong></h5>
                                 <div>
-                                    <button class="btn btn-sm btn-primary edit-intervenant" data-id="{{ intervenant.id }}">Modifier</button>
-                                    <button class="btn btn-sm btn-danger delete-intervenant" data-id="{{ intervenant.id }}">Supprimer</button>
-                                <div>
+                                    <a href="#" class="bi-pencil-fill text-secondary edit-intervenant" data-id="{{ intervenant.id }}"></a>
+                                    <a href="#" class="bi-trash text-warning delete-intervenant" data-id="{{ intervenant.id }}"></a>
+                                </div>
                             </div>
                         </li>
                         {% endfor %}
@@ -56,8 +58,33 @@
     </div>
 </div>
 
+
 <script type="text/javascript" defer>
     $(document).ready(function () {
+        // Fonction de filtrage des intervenants en fonction de la recherche
+        function filterIntervenants(searchTerm) {
+            var intervenantList = $('.planning-area');
+            var intervenants = intervenantList.find('li');
+
+            intervenants.each(function() {
+                var intervenant = $(this);
+                var intervenantName = intervenant.find('h5').text().toLowerCase();
+                
+
+                if (intervenantName.indexOf(searchTerm.toLowerCase()) === -1) {
+                    intervenant.hide();
+                } else {
+                    intervenant.show();
+                }
+            });
+        }
+
+        // Écouter l'événement de saisie dans la barre de recherche
+        $('#searchInput').on('input', function() {
+            var searchTerm = $(this).val();
+            filterIntervenants(searchTerm);
+        });
+        
         $('#intervenantForm').submit(function (e) {
             e.preventDefault();
             var form = $(this);
@@ -97,17 +124,19 @@
                         });
 
                         var debutdiv = $('<div/>');
-
-                        var editButton = $('<button/>', {
-                            class: 'btn btn-sm btn-primary edit-intervenant',
+                        
+                        var editButton = $('<a/>', {
+                            href: "#",
+                            class: 'bi-pencil-fill text-secondary edit-intervenant',
                             'data-id': response.intervenant.id,
-                            text: 'Modifier'
+                            text: ''
                         });
 
-                        var deleteButton = $('<button/>', {
-                            class: 'btn btn-sm btn-danger delete-intervenant',
+                        var deleteButton = $('<a/>', {
+                            href: "#",
+                            class: 'bi-trash text-warning delete-intervenant',
                             'data-id': response.intervenant.id,
-                            text: 'Supprimer'
+                            text: ''
                         });
                         
                         debutdiv.append(editButton, deleteButton)
