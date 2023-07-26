@@ -741,14 +741,16 @@ def on_laptop(request):
 # * CHAQUE PC A UNE SEULE SALLE ATTRIBUEE A TRAVERS TOUS LES CONGRES
 def fetching_files(request):
     # * ADDRESSE DU PC SERVEUR
-    host = "10.32.1.2"
+    # host = "10.32.1.2"
+    host = "192.168.0.101"
     user = "admin"
     password = "admin"
     # * DOSSIER DE STOCKAGE DES FICHIERS
     salle = "Salle 1"
-    chemin_salle = "C:/Users/Mediadone/Documents/CONGRES/"
+    # chemin_salle = "C:/Users/Mediadone/Documents/CONGRES/"
+    chemin_salle = "C:/Users/wuake/Documents/CONGRES/"
 
-    if request.method == 'POST':    
+    if request.method == 'POST':  
         salle = "Salle 1"
         files = []
         try:
@@ -775,17 +777,17 @@ def fetching_files(request):
             # # the name of file you want to download from the FTP server
             for file in files:
                 with open(chemin_salle + salle + "/" + file, "wb") as filename:
+                    # ! CHANGER ETAT ON_LAPTOP A TRUE
                     # use FTP's RETR command to download the file
                     server.retrbinary(f"RETR {file}", filename.write)  
             server.quit()
             
-
         except Exception as e:
             print("ERREUR DE CONNEXION AU SERVEUR")
             print("Erreur =>", e)
 
         # ? on va chercher l'ip de la machine sur laquelle onclique sur le bouton refresh 
-        # ? pour venir mettre à jour la liste des fichiers sur le pupitre  (SECURITE pour PLUS TARD)
+        # ? pour venir mettre à jour la liste des fichiers sur le pupitre (SECURITE pour PLUS TARD)
         adresse_ip = request.META.get('REMOTE_ADDR', None)
 
         if not adresse_ip:
@@ -798,3 +800,15 @@ def fetching_files(request):
     
 
     return JsonResponse({"adresse_ip": adresse_ip})
+# * CHANGE LA COULEUR DU BOUTON PLAY EN FONCTION DE L'IMPORT DU FICHIER
+def couleur_bouton(request):
+    id = json.loads(request.body).get('id', '')
+    # * on veut savoir pour un seul fichier
+    fichier = File.objects.filter(id = id)
+
+    serv = True if fichier.on_serveur else False
+    laptop = True if fichier.on_laptop else False
+    # * 0 = pas de fichier, 1 = fichier sur serveur, 2 = fichier sur laptop & serveur
+    res = 1 if serv and not laptop else 2 if serv and laptop else 0
+
+    return JsonResponse({"status": res})

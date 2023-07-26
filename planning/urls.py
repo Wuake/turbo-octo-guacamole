@@ -26,4 +26,5 @@ urlpatterns = [
     path("check_mark/", views.check_mark, name="check_mark"),
     path("on_laptop/", views.on_laptop, name="on_laptop"),
     path("fetching_files/", views.fetching_files, name="fetching_files"),
+    path("couleur_bouton/", views.couleur_bouton, name="couleur_bouton"),
 ]
